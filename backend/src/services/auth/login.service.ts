@@ -3,7 +3,7 @@ import { sessionRepository } from "../../repository/session.repository.js";
 import { UserRepository } from "../../repository/user.repository.js";
 import type { Isession } from "../../types/models/Isession.js";
 import type { ResponseData } from "../../types/reqRes.js";
-import { compareHash, createHash } from "../../utils/hash.js";
+import { compareHash, hashToken } from "../../utils/hash.js";
 import { logger } from "../../utils/logger.js";
 import jwt from "jsonwebtoken";
 
@@ -37,26 +37,30 @@ export const handleLogin = async (bodyObject: any) => {
     return res;
   }
 
-  const refreshToken = jwt.sign({ id: user.id }, env.JWT_SECRET, {
+  const refreshToken = jwt.sign({ userId: user.id }, env.JWT_SECRET, {
     expiresIn: "7d",
   });
 
-  const refreshTokenHash = await createHash(refreshToken);
+  const refreshTokenHash = hashToken(refreshToken);
 
-  const session: Isession = {
+  const sessionObject: Isession = {
     userId: user._id,
-    refreshHash: refreshTokenHash,
+    refreshTokenHash,
     ip: ip,
     userAgent: userAgent,
     revoke: false,
   };
 
   //create sessoin
-  await sessionRepository.createSession(session);
+  const session = await sessionRepository.createSession(sessionObject);
 
-  const accessToken = jwt.sign({ id: user.id }, env.JWT_SECRET, {
-    expiresIn: "15m",
-  });
+  const accessToken = jwt.sign(
+    { userId: user.id, sessionId: session.id },
+    env.JWT_SECRET,
+    {
+      expiresIn: "15m",
+    },
+  );
 
   const res: ResponseData = {
     success: true,

@@ -13,6 +13,7 @@ import {
 } from "../controllers/auth.controller.js";
 import {
   loginValidationSchema,
+  refreshTokenValidationSchema,
   resendOtpValidationSchema,
   signupValidationSchema,
   verifyOtpValidationSchema,
@@ -36,7 +37,7 @@ router.post(
  */
 router.get(
   "/refresh-token",
-  // validateReq(verifyOtpValidationSchema, ValidationSource.BODY),
+  validateReq(refreshTokenValidationSchema, ValidationSource.BODY),
   asyncHandler(refreshToken),
 );
 
@@ -70,7 +71,15 @@ router.post(
   asyncHandler(login),
 );
 
-//logout
+/**
+ * POST / logout
+ * Validates: refresh token
+ */
+router.post(
+  "/logout",
+  validateReq(loginValidationSchema, ValidationSource.BODY),
+  asyncHandler(login),
+);
 
 //logout from all
 

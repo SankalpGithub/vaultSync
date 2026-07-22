@@ -14,11 +14,15 @@ const deleteOtp = async (otpId: string) => {
 };
 
 const updateOtp = async (otpId: string, otpHash: string, expiredsAt: Date) => {
-  return await otpModel.findByIdAndUpdate(otpId, {
-    $set: {
-      otpHash,
+  return await otpModel.findByIdAndUpdate(
+    otpId,
+    {
+      $set: {
+        otpHash,
+      },
     },
-  });
+    { new: true },
+  );
 };
 
 export const otpRepository = {

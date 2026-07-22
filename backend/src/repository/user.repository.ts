@@ -16,11 +16,15 @@ const createUser = async (user: IUser) => {
 };
 
 const updateUserEmailverifyStatus = async (userId: string, status: boolean) => {
-  return await User.findByIdAndUpdate(userId, {
-    $set: {
-      isEmailVerified: status,
+  return await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        isEmailVerified: status,
+      },
     },
-  });
+    { new: true },
+  );
 };
 export const UserRepository = {
   findUser,

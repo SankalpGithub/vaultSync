@@ -1,13 +1,12 @@
 import type { Request, Response } from "express";
 import { register } from "../services/auth/signup.service.js";
-import type { Ilogin, Iregister } from "../types/auth.js";
 import type { ResponseData } from "../types/reqRes.js";
 import { sendResponse } from "../utils/responseHandler.js";
-import type { IverifyOtp } from "../types/auth.js";
 import { handleVerifyOtp } from "../services/auth/verifyOtp.service.js";
 import { handleResendOtp } from "../services/auth/resendOtp.service.js";
 import { handleLogin } from "../services/auth/login.service.js";
 import { handleRefreshToken } from "../services/auth/refreshToken.service.js";
+import type { Iregister } from "../types/auth.js";
 
 /**
  * @route   POST /signup
@@ -131,3 +130,17 @@ export const login = async (req: Request, res: Response) => {
 
   return sendResponse(res, result);
 };
+
+/**
+ * @route   POST /logout
+ * @desc    logout from a particular device
+ * @access  secure
+ */
+export const logout = async (req: Request, res: Response) => {};
+
+/**
+ * @route   POST /logout-all
+ * @desc    logout from all devices
+ * @access  secure
+ */
+export const logoutAll = async (req: Request, res: Response) => {};

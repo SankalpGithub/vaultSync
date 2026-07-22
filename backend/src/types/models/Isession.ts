@@ -2,7 +2,7 @@ import type { Types } from "mongoose";
 
 export interface Isession {
   userId: Types.ObjectId;
-  refreshHash: string;
+  refreshTokenHash: string;
   ip: string;
   userAgent: string;
   revoke: boolean;

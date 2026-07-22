@@ -11,10 +11,9 @@ import {
   passwordValidator,
   nameValidator,
   usernameValidator,
-  uuidValidator,
-  paginationValidator,
   otpValidator,
 } from "./schemas.validation.js";
+import { createRequestSchema } from "./requestSchema.js";
 
 // ============= Authentication Schemas =============
 
@@ -22,37 +21,70 @@ import {
  * Signup endpoint validation
  * Validates: body
  */
-export const signupValidationSchema = z.object({
-  name: nameValidator,
-  username: usernameValidator,
-  email: emailValidator,
-  password: passwordValidator,
+
+export const signupValidationObject = z
+  .object({
+    name: nameValidator,
+    username: usernameValidator,
+    email: emailValidator,
+    password: passwordValidator,
+  })
+  .strict();
+
+export const signupValidationSchema = createRequestSchema({
+  body: signupValidationObject,
 });
 
 // /**
 //  * Verify OTP endpoint validation
 //  * Validates: body
 //  */
-export const verifyOtpValidationSchema = z.object({
-  email: emailValidator,
-  otp: otpValidator,
+export const verifyOtpValidationObject = z
+  .object({
+    email: emailValidator,
+    otp: otpValidator,
+  })
+  .strict();
+export const verifyOtpValidationSchema = createRequestSchema({
+  body: verifyOtpValidationObject,
 });
 
 /**
  * Resend OTP endpoint validation
  * Validates: body
  */
-export const resendOtpValidationSchema = z.object({
-  email: emailValidator,
+export const resendOtpValidationObject = z
+  .object({
+    email: emailValidator,
+  })
+  .strict();
+export const resendOtpValidationSchema = createRequestSchema({
+  body: resendOtpValidationObject,
 });
 
 /**
  * Login endpoint validation
  * Validates: body
  */
-export const loginValidationSchema = z.object({
-  email: emailValidator,
-  password: z.string("Password is required"),
+export const loginValidationObject = z
+  .object({
+    email: emailValidator,
+    password: z.string("Password is required"),
+  })
+  .strict();
+export const loginValidationSchema = createRequestSchema({
+  body: loginValidationObject,
+});
+
+/**
+ * refresh token endpoint
+ * Validates: cookie
+ */
+export const refreshTokenValidationObject = z.object({
+  refreshToken: z.string().min(1, "Refresh token in cookie is required"),
+});
+export const refreshTokenValidationSchema = createRequestSchema({
+  cookies: refreshTokenValidationObject,
 });
 
 // // ============= User/Profile Schemas =============

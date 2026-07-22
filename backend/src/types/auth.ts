@@ -1,11 +1,11 @@
 import { z } from "zod";
 import type {
-  loginValidationSchema,
-  signupValidationSchema,
-  verifyOtpValidationSchema,
+  loginValidationObject,
+  signupValidationObject,
+  verifyOtpValidationObject,
 } from "../validation/examples.validation.js";
-export type Iregister = z.infer<typeof signupValidationSchema>;
+export type Iregister = z.infer<typeof signupValidationObject>;
 
-export type IverifyOtp = z.infer<typeof verifyOtpValidationSchema>;
+export type IverifyOtp = z.infer<typeof verifyOtpValidationObject>;
 
-export type Ilogin = z.infer<typeof loginValidationSchema>;
+export type Ilogin = z.infer<typeof loginValidationObject>;

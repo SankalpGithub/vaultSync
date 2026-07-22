@@ -9,9 +9,10 @@ const sessionSchema = new Schema<Isession>(
       required: true,
     },
 
-    refreshHash: {
+    refreshTokenHash: {
       type: String,
       required: true,
+      unique: true,
     },
 
     ip: {

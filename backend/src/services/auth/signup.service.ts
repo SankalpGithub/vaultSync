@@ -2,9 +2,7 @@ import { UserRepository } from "../../repository/user.repository.js";
 import type { Iregister } from "../../types/auth.js";
 import type { ResponseData } from "../../types/reqRes.js";
 import { createHash } from "../../utils/hash.js";
-import { generateOtp } from "../../utils/generateOtp.js";
 import { otpRepository } from "../../repository/otp.repository.js";
-import { sendEmail } from "../nodemailer.service.js";
 import { otpEmailTemplate } from "../../templates/otp.template.js";
 import { logger } from "../../utils/logger.js";
 
