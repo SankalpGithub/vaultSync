@@ -2,11 +2,17 @@ import type { Request, Response } from "express";
 import { register } from "../services/auth/signup.service.js";
 import type { ResponseData } from "../types/reqRes.js";
 import { sendResponse } from "../utils/responseHandler.js";
-import { handleVerifyOtp } from "../services/auth/verifyOtp.service.js";
+import { handleVerifyOtp } from "../services/auth/signup.service.js";
 import { handleResendOtp } from "../services/auth/resendOtp.service.js";
 import { handleLogin } from "../services/auth/login.service.js";
 import { handleRefreshToken } from "../services/auth/refreshToken.service.js";
 import type { Iregister } from "../types/auth.js";
+import {
+  handleLogout,
+  handleLogoutAll,
+} from "../services/auth/logout.service.js";
+import { CONSTANT } from "../constant.js";
+import { handleResetPassword } from "../services/auth/resetPassword.service.js";
 
 /**
  * @route   POST /signup
@@ -39,7 +45,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
 
   const { refreshToken, accessToken } = result.data;
 
-  res.cookie("refreshToken", refreshToken, {
+  res.cookie(CONSTANT.REFRESH_TOKEN_COOKIE_TAG, refreshToken, {
     httpOnly: true,
     secure: true,
     sameSite: "strict",
@@ -77,7 +83,7 @@ export const refreshToken = async (req: Request, res: Response) => {
 
   const { accessToken, newRefreshToken } = result.data;
 
-  res.cookie("refreshToken", newRefreshToken, {
+  res.cookie(CONSTANT.REFRESH_TOKEN_COOKIE_TAG, newRefreshToken, {
     httpOnly: true,
     secure: true,
     sameSite: "strict",
@@ -119,7 +125,7 @@ export const login = async (req: Request, res: Response) => {
   }
 
   const { accessToken, refreshToken } = result.data;
-  res.cookie("refreshToken", refreshToken, {
+  res.cookie(CONSTANT.REFRESH_TOKEN_COOKIE_TAG, refreshToken, {
     httpOnly: true,
     secure: true,
     sameSite: "strict",
@@ -136,11 +142,63 @@ export const login = async (req: Request, res: Response) => {
  * @desc    logout from a particular device
  * @access  secure
  */
-export const logout = async (req: Request, res: Response) => {};
+export const logout = async (req: Request, res: Response) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) {
+    const response: ResponseData = {
+      success: true,
+      message: "Unauthorize user (refresh token not found)",
+      data: null,
+      statusCode: 401,
+    };
+    return sendResponse(res, response);
+  }
+
+  const result: ResponseData = await handleLogout(refreshToken);
+
+  if (!result.success) {
+    return sendResponse(res, result);
+  }
+
+  res.clearCookie(CONSTANT.REFRESH_TOKEN_COOKIE_TAG);
+  return sendResponse(res, result);
+};
 
 /**
  * @route   POST /logout-all
  * @desc    logout from all devices
  * @access  secure
  */
-export const logoutAll = async (req: Request, res: Response) => {};
+export const logoutAll = async (req: Request, res: Response) => {
+  const { refreshToken } = req.cookies;
+  if (!refreshToken) {
+    const response: ResponseData = {
+      success: true,
+      message: "Unauthorize user (refresh token not found)",
+      data: null,
+      statusCode: 401,
+    };
+    return sendResponse(res, response);
+  }
+
+  const result: ResponseData = await handleLogoutAll(refreshToken);
+
+  if (!result.success) {
+    return sendResponse(res, result);
+  }
+
+  res.clearCookie(CONSTANT.REFRESH_TOKEN_COOKIE_TAG);
+  return sendResponse(res, result);
+};
+
+/**
+ * @route   POST /reset-password
+ * @desc    Reset password in case user fortget it
+ * @access  secure
+ */
+export const resetPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+  const result = await handleResetPassword(email);
+  return result;
+};

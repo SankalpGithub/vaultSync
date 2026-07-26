@@ -10,7 +10,7 @@ export enum ValidationSource {
   COOKIES = "cookies",
 }
 
-export const validateReq = (schema: ZodObject, source: ValidationSource) => {
+export const validateReq = (schema: ZodObject) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const result = schema.safeParse({
       body: req.body || {},

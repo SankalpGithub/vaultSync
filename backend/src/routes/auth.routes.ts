@@ -6,6 +6,8 @@ import {
 } from "../middlewares/reqValidator.middleware.js";
 import {
   login,
+  logout,
+  logoutAll,
   refreshToken,
   resendOtp,
   signup,
@@ -27,7 +29,7 @@ const router: Router = Router();
  */
 router.post(
   "/sign-up",
-  validateReq(signupValidationSchema, ValidationSource.BODY),
+  validateReq(signupValidationSchema),
   asyncHandler(signup),
 );
 
@@ -37,7 +39,7 @@ router.post(
  */
 router.get(
   "/refresh-token",
-  validateReq(refreshTokenValidationSchema, ValidationSource.BODY),
+  // validateReq(refreshTokenValidationSchema),
   asyncHandler(refreshToken),
 );
 
@@ -47,7 +49,7 @@ router.get(
  */
 router.post(
   "/verify-otp",
-  validateReq(verifyOtpValidationSchema, ValidationSource.BODY),
+  validateReq(verifyOtpValidationSchema),
   asyncHandler(verifyOtp),
 );
 
@@ -57,7 +59,7 @@ router.post(
  */
 router.post(
   "/resend-otp",
-  validateReq(resendOtpValidationSchema, ValidationSource.BODY),
+  validateReq(resendOtpValidationSchema),
   asyncHandler(resendOtp),
 );
 
@@ -65,24 +67,30 @@ router.post(
  * POST / login
  * Validates: email, password
  */
-router.post(
-  "/login",
-  validateReq(loginValidationSchema, ValidationSource.BODY),
-  asyncHandler(login),
-);
+router.post("/login", validateReq(loginValidationSchema), asyncHandler(login));
 
 /**
  * POST / logout
  * Validates: refresh token
  */
-router.post(
+router.get(
   "/logout",
-  validateReq(loginValidationSchema, ValidationSource.BODY),
-  asyncHandler(login),
+  validateReq(refreshTokenValidationSchema),
+  asyncHandler(logout),
 );
 
 //logout from all
+router.get(
+  "/logout-all",
+  // validateReq(loginValidationSchema),
+  asyncHandler(logoutAll),
+);
 
 //reset password
+router.post(
+  "/reset-password",
+  validateReq(loginValidationSchema),
+  asyncHandler(login),
+);
 
 export default router;

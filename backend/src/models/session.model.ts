@@ -11,8 +11,6 @@ const sessionSchema = new Schema<Isession>(
 
     refreshTokenHash: {
       type: String,
-      required: true,
-      unique: true,
     },
 
     ip: {

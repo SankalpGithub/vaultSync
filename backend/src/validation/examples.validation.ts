@@ -81,7 +81,7 @@ export const loginValidationSchema = createRequestSchema({
  * Validates: cookie
  */
 export const refreshTokenValidationObject = z.object({
-  refreshToken: z.string().min(1, "Refresh token in cookie is required"),
+  refreshToken: z.string("Refresh token in cookie is required"),
 });
 export const refreshTokenValidationSchema = createRequestSchema({
   cookies: refreshTokenValidationObject,

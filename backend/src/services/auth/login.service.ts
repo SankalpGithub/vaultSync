@@ -3,6 +3,7 @@ import { sessionRepository } from "../../repository/session.repository.js";
 import { UserRepository } from "../../repository/user.repository.js";
 import type { Isession } from "../../types/models/Isession.js";
 import type { ResponseData } from "../../types/reqRes.js";
+import type { ItokenPayload } from "../../types/tokenPayload.js";
 import { compareHash, hashToken } from "../../utils/hash.js";
 import { logger } from "../../utils/logger.js";
 import jwt from "jsonwebtoken";
@@ -37,15 +38,9 @@ export const handleLogin = async (bodyObject: any) => {
     return res;
   }
 
-  const refreshToken = jwt.sign({ userId: user.id }, env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
-
-  const refreshTokenHash = hashToken(refreshToken);
-
   const sessionObject: Isession = {
     userId: user._id,
-    refreshTokenHash,
+    refreshTokenHash: "",
     ip: ip,
     userAgent: userAgent,
     revoke: false,
@@ -54,13 +49,34 @@ export const handleLogin = async (bodyObject: any) => {
   //create sessoin
   const session = await sessionRepository.createSession(sessionObject);
 
-  const accessToken = jwt.sign(
-    { userId: user.id, sessionId: session.id },
-    env.JWT_SECRET,
-    {
-      expiresIn: "15m",
-    },
-  );
+  //create refresh token
+  const refreshTokenPayload: ItokenPayload = {
+    userId: user.id,
+    sessionId: session.id,
+    type: "refresh",
+  };
+
+  const refreshToken = jwt.sign(refreshTokenPayload, env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+
+  const refreshTokenHash = hashToken(refreshToken);
+
+  //update session with refresh token
+  await sessionRepository.updateSession(session.id, {
+    refreshTokenHash,
+  });
+
+  //create access token
+  const accessTokenPayload: ItokenPayload = {
+    userId: user.id,
+    sessionId: session.id,
+    type: "access",
+  };
+
+  const accessToken = jwt.sign(accessTokenPayload, env.JWT_SECRET, {
+    expiresIn: "15m",
+  });
 
   const res: ResponseData = {
     success: true,
