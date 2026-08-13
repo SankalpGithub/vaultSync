@@ -5,9 +5,17 @@ import { errorMiddleware } from "./middlewares/errorHandler.middleware.js";
 import helmet from "helmet";
 import router from "./routes/root.routes.js";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 const app: Express = express();
+const frontendUrl = "http://localhost:3000";
 
+app.use(
+  cors({
+    origin: frontendUrl,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use(helmet());
