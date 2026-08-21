@@ -5,18 +5,22 @@ import { createHash } from "../../utils/hash.js";
 import { otpRepository } from "../../repository/otp.repository.js";
 import { otpEmailTemplate } from "../../templates/otp.template.js";
 import { logger } from "../../utils/logger.js";
-import type { IverifyOtp } from "../../types/auth.js";
 import { compareHash, hashToken } from "../../utils/hash.js";
 import jwt from "jsonwebtoken";
 import { env } from "../../configs/env.config.js";
 import { sessionRepository } from "../../repository/session.repository.js";
 import type { Isession } from "../../types/models/Isession.js";
 import type { ItokenPayload } from "../../types/tokenPayload.js";
+import { sendEmail } from "../nodemailer.service.js";
+import { generateOtp } from "../../utils/generateOtp.js";
 
 export const register = async (body: Iregister) => {
   //verify user exist
   const { name, username, email, password } = body;
-  const isUserExist = await UserRepository.findUser(email, username);
+  const isUserExist = await UserRepository.findUser({
+    email,
+    username,
+  });
 
   if (isUserExist) {
     logger.error("User Alerady Exist", {
@@ -42,8 +46,7 @@ export const register = async (body: Iregister) => {
   });
 
   //otp
-  // const otp: string = generateOtp();
-  const otp: string = "123456";
+  const otp: string = generateOtp();
   const otpHash: string = await createHash(otp);
   await otpRepository.insertOtp({
     userId: user._id,
@@ -56,12 +59,12 @@ export const register = async (body: Iregister) => {
   //email
   const subject = "OTP verifcation for vaultSync application";
   const html = otpEmailTemplate.replace("{{OTP}}", otp);
-  // const result = await sendEmail(
-  //   email,
-  //   subject,
-  //   `Your OTP code is ${otp}`,
-  //   html,
-  // );
+  const result = await sendEmail(
+    email,
+    subject,
+    `Your OTP code is ${otp}`,
+    html,
+  );
 
   //response
   const res: ResponseData = {

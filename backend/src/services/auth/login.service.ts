@@ -11,7 +11,7 @@ import jwt from "jsonwebtoken";
 export const handleLogin = async (bodyObject: any) => {
   const { email, password, body, ip, userAgent } = bodyObject;
 
-  const user = await UserRepository.findUserByEmail(email);
+  const user = await UserRepository.findUser({ email });
   if (!user) {
     logger.error("User not found", {
       statuscode: 404,

@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 
 function VerifyOtpContent() {
@@ -28,46 +29,79 @@ function VerifyOtpContent() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12 text-slate-100">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/90 p-8 shadow-2xl shadow-black/40">
-        <div className="mb-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-cyan-400">
-            Verify email
+    <main className="auth-shell">
+      <Link className="auth-brand" href="/">
+        <span className="brand-mark">V</span>VaultSync
+        <span className="brand-dot">.</span>
+      </Link>
+      <div className="auth-layout otp-layout">
+        <section className="auth-aside">
+          <p className="section-kicker">One last step</p>
+          <h1>
+            Verify your
+            <br />
+            <em>workspace.</em>
+          </h1>
+          <p>
+            A quick confirmation keeps your vault access tied to a real,
+            verified identity.
           </p>
-          <h1 className="mt-2 text-3xl font-semibold">One-time password</h1>
-          <p className="mt-2 text-sm text-slate-400">
-            Enter the OTP sent to {email || "your email"}.
-          </p>
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <input
-            className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 outline-none transition focus:border-cyan-400"
-            placeholder="Enter OTP"
-            value={otp}
-            onChange={(event) => setOtp(event.target.value)}
-            required
-          />
-
-          {error ? <p className="text-sm text-rose-400">{error}</p> : null}
-
+          <div className="auth-aside-note">
+            <span>01</span>
+            <div>
+              <strong>Protected from day one</strong>
+              <small>Verification helps keep unauthorized users out.</small>
+            </div>
+          </div>
+        </section>
+        <section className="auth-card otp-card">
+          <div className="auth-card-heading">
+            <p className="section-kicker">Email verification / 02</p>
+            <h2>Check your inbox</h2>
+            <p>
+              Enter the one-time password we sent to{" "}
+              <strong className="otp-email">{email || "your email"}</strong>.
+            </p>
+          </div>
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <label>
+              One-time password
+              <input
+                className="auth-input otp-input"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="000000"
+                value={otp}
+                onChange={(event) => setOtp(event.target.value)}
+                required
+              />
+            </label>
+            {error ? <p className="auth-error">{error}</p> : null}
+            <button
+              className="button button-accent auth-submit"
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Verifying..." : "Verify email"}
+              <span>↗</span>
+            </button>
+          </form>
           <button
-            className="w-full rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
-            type="submit"
-            disabled={isSubmitting}
+            className="otp-resend"
+            onClick={() => resendOtp(email)}
+            type="button"
           >
-            {isSubmitting ? "Verifying..." : "Verify OTP"}
+            Didn&apos;t receive it? <span>Resend OTP →</span>
           </button>
-        </form>
-
-        <button
-          className="mt-4 w-full rounded-xl border border-slate-700 px-4 py-3 font-semibold text-slate-100 transition hover:border-cyan-400 hover:text-cyan-300"
-          onClick={() => resendOtp(email)}
-          type="button"
-        >
-          Resend OTP
-        </button>
+          <p className="auth-switch">
+            <Link href="/auth/signup">← Back to sign up</Link>
+          </p>
+        </section>
       </div>
+      <p className="auth-footnote">
+        VaultSync keeps your credentials private.{" "}
+        <Link href="/">Back to home</Link>
+      </p>
     </main>
   );
 }
@@ -76,9 +110,10 @@ export default function VerifyOtpPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
-          Loading...
-        </div>
+        <main className="auth-shell auth-loading">
+          <span className="brand-mark">V</span>
+          <p>Loading secure verification...</p>
+        </main>
       }
     >
       <VerifyOtpContent />

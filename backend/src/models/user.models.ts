@@ -7,7 +7,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: true,
     },
-
+    username: {
+      type: String,
+      required: true,
+    },
     email: {
       type: String,
       required: true,
@@ -17,6 +20,16 @@ const userSchema = new Schema<IUser>(
     passwordHash: {
       type: String,
       required: true,
+    },
+
+    hashResetPasswordToken: {
+      type: String,
+      default: null,
+    },
+
+    passwordResetExpires: {
+      type: Date,
+      default: null,
     },
 
     isEmailVerified: {

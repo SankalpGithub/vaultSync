@@ -8,7 +8,7 @@ export const createRequestSchema = ({
   body = empty,
   query = empty,
   params = empty,
-  cookies = empty,
+  cookies = z.looseObject({}),
   headers = z.looseObject({}),
 }: {
   body?: RequestSchema;

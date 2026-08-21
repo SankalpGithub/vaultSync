@@ -5,21 +5,25 @@ import {
   ValidationSource,
 } from "../middlewares/reqValidator.middleware.js";
 import {
+  forgotPassword,
   login,
   logout,
   logoutAll,
   refreshToken,
   resendOtp,
+  resetPassword,
   signup,
   verifyOtp,
 } from "../controllers/auth.controller.js";
 import {
+  forgotPasswordSchema,
   loginValidationSchema,
   refreshTokenValidationSchema,
   resendOtpValidationSchema,
+  resetPasswordSchema,
   signupValidationSchema,
   verifyOtpValidationSchema,
-} from "../validation/examples.validation.js";
+} from "../validation/routes.validation.js";
 
 const router: Router = Router();
 
@@ -86,11 +90,18 @@ router.get(
   asyncHandler(logoutAll),
 );
 
+//forgot password
+router.post(
+  "/forgot-password",
+  validateReq(forgotPasswordSchema),
+  asyncHandler(forgotPassword),
+);
+
 //reset password
 router.post(
   "/reset-password",
-  validateReq(loginValidationSchema),
-  asyncHandler(login),
+  validateReq(resetPasswordSchema),
+  asyncHandler(resetPassword),
 );
 
 export default router;

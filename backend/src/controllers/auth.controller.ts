@@ -12,7 +12,10 @@ import {
   handleLogoutAll,
 } from "../services/auth/logout.service.js";
 import { CONSTANT } from "../constant.js";
-import { handleResetPassword } from "../services/auth/resetPassword.service.js";
+import {
+  handleForgotPassword,
+  handleResetPassword,
+} from "../services/auth/resetPassword.service.js";
 
 /**
  * @route   POST /signup
@@ -193,12 +196,23 @@ export const logoutAll = async (req: Request, res: Response) => {
 };
 
 /**
+ * @route   POST /forgot-password
+ * @desc    proceed to reset-password by send reset password page link
+ * @access  secure
+ */
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+  const result = await handleForgotPassword(email);
+  return sendResponse(res, result);
+};
+
+/**
  * @route   POST /reset-password
- * @desc    Reset password in case user fortget it
+ * @desc    reset the password inside db
  * @access  secure
  */
 export const resetPassword = async (req: Request, res: Response) => {
-  const { email } = req.body;
-  const result = await handleResetPassword(email);
-  return result;
+  const { token, newPassword } = req.body;
+  const result = await handleResetPassword(token, newPassword);
+  return sendResponse(res, result);
 };

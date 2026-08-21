@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  forgotPasswordUser,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -29,6 +30,7 @@ type AuthContextValue = {
   login: (payload: LoginPayload) => Promise<void>;
   verifyOtp: (email: string, otp: string) => Promise<void>;
   resendOtp: (email: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<string>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
 };
@@ -126,6 +128,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPendingEmail(email);
   };
 
+  const forgotPassword = async (email: string) => {
+    setError(null);
+    const response = await forgotPasswordUser({ email });
+
+    if (!response.success) {
+      setError(response.message);
+      throw new Error(response.message);
+    }
+
+    return response.message;
+  };
+
   const logout = async () => {
     setError(null);
     try {
@@ -149,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       verifyOtp,
       resendOtp,
+      forgotPassword,
       logout,
       refreshSession,
     }),

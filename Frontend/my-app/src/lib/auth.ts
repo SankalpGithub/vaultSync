@@ -22,7 +22,11 @@ export interface VerifyOtpPayload {
   otp: string;
 }
 
-const API_PREFIX = "http://localhost:5000/api/auth";
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+const API_PREFIX = "http://localhost:5000/api/v1/auth";
 
 async function request<T>(
   path: string,
@@ -74,6 +78,13 @@ export async function resendOtpUser(email: string) {
   return request("/resend-otp", {
     method: "POST",
     body: JSON.stringify({ email }),
+  });
+}
+
+export async function forgotPasswordUser(payload: ForgotPasswordPayload) {
+  return request("/forgot-password", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 

@@ -1,13 +1,18 @@
-import { createHash } from "../../utils/hash.js";
+import { createHash, hashToken } from "../../utils/hash.js";
 import { UserRepository } from "../../repository/user.repository.js";
 import type { ResponseData } from "../../types/reqRes.js";
 import { logger } from "../../utils/logger.js";
-import { otpRepository } from "../../repository/otp.repository.js";
-import { otpEmailTemplate } from "../../templates/otp.template.js";
+import crypto from "crypto";
+import { env } from "../../configs/env.config.js";
+import fs from "fs";
+import path from "path";
+import { sendEmail } from "../nodemailer.service.js";
+import type { IUser } from "../../types/models/Iuser.js";
+import { sessionRepository } from "../../repository/session.repository.js";
 
-export const handleResetPassword = async (email: string) => {
+export const handleForgotPassword = async (email: string) => {
   //verify user exist
-  const user = await UserRepository.findUserByEmail(email);
+  const user = await UserRepository.findUser({ email });
 
   if (!user) {
     logger.error("User not found plz sign up", {
@@ -22,27 +27,35 @@ export const handleResetPassword = async (email: string) => {
     return res;
   }
 
-  //otp
-  // const otp: string = generateOtp();
-  const otp: string = "123456";
-  const otpHash: string = await createHash(otp);
-  await otpRepository.insertOtp({
-    userId: user._id,
-    email,
-    otpHash,
-    purpose: "password_reset",
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-  });
+  //generate token
+  const resetPasswordToken = crypto.randomBytes(32).toString("hex");
 
-  //email
-  const subject = "OTP verifcation for vaultSync application (reset password)";
-  const html = otpEmailTemplate.replace("{{OTP}}", otp);
-  // const result = await sendEmail(
-  //   email,
-  //   subject,
-  //   `Your OTP code is ${otp}`,
-  //   html,
-  // );
+  //create hash of token and save to db
+  const hashResetPasswordToken = hashToken(resetPasswordToken);
+
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  await UserRepository.updateResetPasswordField(
+    user.id,
+    hashResetPasswordToken,
+    expiresAt,
+  );
+
+  const resetPasswordLink = `${env.FRONTEND_URL}/auth/reset-password?token=${resetPasswordToken}`;
+  //send reset password page link through email
+
+  const templatePath = path.join(
+    process.cwd(),
+    "src",
+    "templates",
+    "resetpassword.template.html",
+  );
+
+  const html = fs.readFileSync(templatePath, "utf-8");
+  const emailHtml = html.replace(/{{RESET_URL}}/g, resetPasswordLink);
+
+  const subject = "Reset Your Password";
+  await sendEmail(email, subject, `Email for Reset password link`, emailHtml);
 
   //response
   const res: ResponseData = {
@@ -55,4 +68,60 @@ export const handleResetPassword = async (email: string) => {
   return res;
 };
 
-export const verifyResetPasswordOtp = async (otp: string) => {};
+export const handleResetPassword = async (token: string, password: string) => {
+  //hash token
+  const hashResetPasswordToken = hashToken(token);
+
+  console.log(hashResetPasswordToken);
+  //find valid hash
+  const user: IUser | null = await UserRepository.findUser({
+    hashResetPasswordToken,
+  });
+
+  if (!user) {
+    const res: ResponseData = {
+      success: false,
+      message: "Invalid Token (reset password user not found)",
+      data: null,
+      statusCode: 404,
+    };
+
+    return res;
+  }
+
+  const userId = user._id.toString();
+
+  //check for expiry
+  const passwordResetExpires = user.passwordResetExpires;
+  if (passwordResetExpires != null && passwordResetExpires < new Date()) {
+    const res: ResponseData = {
+      success: false,
+      message: "Invalid Token (Token Expired)",
+      data: null,
+      statusCode: 404,
+    };
+
+    return res;
+  }
+  //hash new password
+  const HashPassword = await createHash(password);
+
+  //update password
+  await UserRepository.updatePassword(userId, HashPassword);
+
+  //set reset password field to null
+  await UserRepository.updateResetPasswordField(userId, null, null);
+
+  //invalidate existing sessions
+  await sessionRepository.updateUserSessions(userId);
+
+  //response
+  const res: ResponseData = {
+    success: true,
+    message: "Password Reset Successfully",
+    data: null,
+    statusCode: 201,
+  };
+
+  return res;
+};

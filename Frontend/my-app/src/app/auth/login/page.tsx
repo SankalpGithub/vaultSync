@@ -26,58 +26,89 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12 text-slate-100">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/90 p-8 shadow-2xl shadow-black/40">
-        <div className="mb-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-cyan-400">
-            Welcome back
+    <main className="auth-shell">
+      <Link className="auth-brand" href="/">
+        <span className="brand-mark">V</span>VaultSync
+        <span className="brand-dot">.</span>
+      </Link>
+      <div className="auth-layout">
+        <section className="auth-aside">
+          <p className="section-kicker">Welcome back</p>
+          <h1>
+            Your secrets are
+            <br />
+            <em>waiting safely.</em>
+          </h1>
+          <p>
+            Access your secure vault and keep your team moving with confidence.
           </p>
-          <h1 className="mt-2 text-3xl font-semibold">Sign in</h1>
-          <p className="mt-2 text-sm text-slate-400">
-            Access your secure vault and manage your sessions.
+          <div className="auth-aside-note">
+            <span>⌁</span>
+            <div>
+              <strong>Encrypted by default</strong>
+              <small>Your credentials stay out of your codebase.</small>
+            </div>
+          </div>
+        </section>
+        <section className="auth-card">
+          <div className="auth-card-heading">
+            <p className="section-kicker">Vault access / 01</p>
+            <h2>Sign in</h2>
+            <p>Enter your details to access your secure workspace.</p>
+          </div>
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <label>
+              Email
+              <input
+                className="auth-input"
+                placeholder="you@company.com"
+                type="email"
+                value={form.email}
+                onChange={(event) =>
+                  setForm({ ...form, email: event.target.value })
+                }
+                required
+              />
+            </label>
+            <label>
+              Password
+              <input
+                className="auth-input"
+                placeholder="Enter your password"
+                type="password"
+                value={form.password}
+                onChange={(event) =>
+                  setForm({ ...form, password: event.target.value })
+                }
+                required
+              />
+            </label>
+            <div className="auth-forgot-row">
+              <span />
+              <Link href="/auth/forgot-password">Forgot password?</Link>
+            </div>
+            {error ? <p className="auth-error">{error}</p> : null}
+            <button
+              className="button button-accent auth-submit"
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Signing in..." : "Sign in"}
+              <span>↗</span>
+            </button>
+          </form>
+          <p className="auth-switch">
+            New here?{" "}
+            <Link href="/auth/signup">
+              Create an account <span>→</span>
+            </Link>
           </p>
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <input
-            className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 outline-none ring-0 transition focus:border-cyan-400"
-            placeholder="Email"
-            type="email"
-            value={form.email}
-            onChange={(event) =>
-              setForm({ ...form, email: event.target.value })
-            }
-            required
-          />
-          <input
-            className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 outline-none ring-0 transition focus:border-cyan-400"
-            placeholder="Password"
-            type="password"
-            value={form.password}
-            onChange={(event) =>
-              setForm({ ...form, password: event.target.value })
-            }
-            required
-          />
-
-          {error ? <p className="text-sm text-rose-400">{error}</p> : null}
-
-          <button
-            className="w-full rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-slate-400">
-          New here?{" "}
-          <Link className="font-semibold text-cyan-400" href="/auth/signup">
-            Create an account
-          </Link>
-        </p>
+        </section>
       </div>
+      <p className="auth-footnote">
+        Secure secret management for modern applications.{" "}
+        <Link href="/">Back to home</Link>
+      </p>
     </main>
   );
 }

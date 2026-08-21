@@ -3,7 +3,7 @@ import type {
   loginValidationObject,
   signupValidationObject,
   verifyOtpValidationObject,
-} from "../validation/examples.validation.js";
+} from "../validation/routes.validation.js";
 export type Iregister = z.infer<typeof signupValidationObject>;
 
 export type IverifyOtp = z.infer<typeof verifyOtpValidationObject>;
