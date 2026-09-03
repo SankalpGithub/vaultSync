@@ -28,6 +28,16 @@ export interface ForgotPasswordPayload {
 
 const API_PREFIX = "http://localhost:5000/api/v1/auth";
 
+let currentAccessToken: string | null = null;
+
+export function getCurrentAccessToken() {
+  return currentAccessToken;
+}
+
+export function setCurrentAccessToken(accessToken: string | null) {
+  currentAccessToken = accessToken;
+}
+
 async function request<T>(
   path: string,
   init: RequestInit = {},
@@ -95,7 +105,13 @@ export async function logoutUser() {
 }
 
 export async function refreshAccessToken() {
-  return request<{ accessToken?: string }>("/refresh-token", {
+  const response = await request<{ accessToken?: string }>("/refresh-token", {
     method: "GET",
   });
+
+  if (response.success && response.data?.accessToken) {
+    setCurrentAccessToken(response.data.accessToken);
+  }
+
+  return response;
 }

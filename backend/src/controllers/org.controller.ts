@@ -1,4 +1,8 @@
-import { handleCreateOrg } from "../services/organizations/createOrg.service.js";
+import {
+  handleCreateOrg,
+  handleDeleteOrganization,
+  handleListOrganizations,
+} from "../services/organizations/createOrg.service.js";
 import type { ResponseData, AuthRequest } from "../types/reqRes.js";
 import type { Response } from "express";
 import { sendResponse } from "../utils/responseHandler.js";
@@ -22,6 +26,36 @@ export const createOrg = async (req: AuthRequest, res: Response) => {
     userId,
     description,
     visibility,
+  );
+  sendResponse(res, result);
+};
+
+export const listOrganizations = async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new AppError("User not authenticated", 401);
+  }
+
+  const result: ResponseData = await handleListOrganizations(userId);
+  sendResponse(res, result);
+};
+
+export const deleteOrganization = async (req: AuthRequest, res: Response) => {
+  const organizationId = req.params.organizationId as string;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new AppError("User not authenticated", 401);
+  }
+
+  if (!organizationId) {
+    throw new AppError("Valid organization ID is required", 400);
+  }
+
+  const result: ResponseData = await handleDeleteOrganization(
+    organizationId,
+    userId,
   );
   sendResponse(res, result);
 };

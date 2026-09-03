@@ -16,6 +16,14 @@ import {
   handleForgotPassword,
   handleResetPassword,
 } from "../services/auth/resetPassword.service.js";
+import { env } from "../configs/env.config.js";
+
+const refreshTokenCookieOptions = {
+  httpOnly: true,
+  secure: env.NODE_ENV === "production",
+  sameSite: "strict" as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
 
 /**
  * @route   POST /signup
@@ -49,10 +57,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
   const { refreshToken, accessToken } = result.data;
 
   res.cookie(CONSTANT.REFRESH_TOKEN_COOKIE_TAG, refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    ...refreshTokenCookieOptions,
   });
 
   result.data = { accessToken };
@@ -87,10 +92,7 @@ export const refreshToken = async (req: Request, res: Response) => {
   const { accessToken, newRefreshToken } = result.data;
 
   res.cookie(CONSTANT.REFRESH_TOKEN_COOKIE_TAG, newRefreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    ...refreshTokenCookieOptions,
   });
 
   result.data = { accessToken };
@@ -129,10 +131,7 @@ export const login = async (req: Request, res: Response) => {
 
   const { accessToken, refreshToken } = result.data;
   res.cookie(CONSTANT.REFRESH_TOKEN_COOKIE_TAG, refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    ...refreshTokenCookieOptions,
   });
 
   result.data = { accessToken };
@@ -164,7 +163,7 @@ export const logout = async (req: Request, res: Response) => {
     return sendResponse(res, result);
   }
 
-  res.clearCookie(CONSTANT.REFRESH_TOKEN_COOKIE_TAG);
+  res.clearCookie(CONSTANT.REFRESH_TOKEN_COOKIE_TAG, refreshTokenCookieOptions);
   return sendResponse(res, result);
 };
 
@@ -191,7 +190,7 @@ export const logoutAll = async (req: Request, res: Response) => {
     return sendResponse(res, result);
   }
 
-  res.clearCookie(CONSTANT.REFRESH_TOKEN_COOKIE_TAG);
+  res.clearCookie(CONSTANT.REFRESH_TOKEN_COOKIE_TAG, refreshTokenCookieOptions);
   return sendResponse(res, result);
 };
 

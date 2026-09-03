@@ -48,6 +48,43 @@ export const handleCreateProject = async (
   return res;
 };
 
+export const handleListProjects = async (ownerId: string) => {
+  const projects = await ProjectRepository.getProjectsByOwner(ownerId);
+
+  const res: ResponseData = {
+    success: true,
+    message: "Projects fetched successfully",
+    data: projects,
+    statusCode: 200,
+  };
+  return res;
+};
+
+export const handleDeleteProjectByOwner = async (
+  projectId: string,
+  ownerId: string,
+) => {
+  const project = await ProjectRepository.deleteProjectByOwner(
+    projectId,
+    ownerId,
+  );
+
+  const res: ResponseData = project
+    ? {
+        success: true,
+        message: "Project deleted successfully",
+        data: project,
+        statusCode: 200,
+      }
+    : {
+        success: false,
+        message: "Project not found",
+        data: null,
+        statusCode: 404,
+      };
+  return res;
+};
+
 export const handleDeleteProject = async (projectId: string) => {
   const project = await ProjectRepository.getProjectById(projectId);
 

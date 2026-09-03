@@ -28,73 +28,69 @@ import { verifyAccessToken } from "../middlewares/auth.middleware.js";
 
 const router: Router = Router();
 
-/**
- * POST/ sign-up for register user
- * Validates: email, password, name, username
- */
+// POST /sign-up
+// Description: Register a new user.
+// Validation: email, password, name, username
 router.post(
   "/sign-up",
   validateReq(signupValidationSchema),
   asyncHandler(signup),
 );
 
-/**
- * POST / refresh-token
- * Validates: refresh the access token using refresh token
- */
-router.get("/refresh-token", asyncHandler(refreshToken));
-
-/**
- * POST / verify-otp
- * Validates: email, otp
- */
+// POST /verify-otp
+// Description: Verifies the signup OTP and activates the user's account.
+// Validation: email, otp
 router.post(
   "/verify-otp",
   validateReq(verifyOtpValidationSchema),
   asyncHandler(verifyOtp),
 );
 
-/**
- * POST / resend-otp
- * Validates: email
- */
+// GET /refresh-token
+// Description: Generates a new access token and refresh token using a valid refresh token.
+// Validation: refresh token
+router.get("/refresh-token", asyncHandler(refreshToken));
+
+// POST /resend-otp
+// Description: Resends the signup OTP to the user's email address.
+// Validation: email
 router.post(
   "/resend-otp",
   validateReq(resendOtpValidationSchema),
   asyncHandler(resendOtp),
 );
 
-/**
- * POST / login
- * Validates: email, password
- */
+// POST /login
+// Description: Authenticates a user and creates an authenticated session.
+// Validation: email, password
 router.post("/login", validateReq(loginValidationSchema), asyncHandler(login));
 
-/**
- * POST / logout
- * Validates: refresh token
- */
+// GET /logout
+// Description: Logs the user out by invalidating the current refresh token.
+// Validation: refresh token
 router.get(
   "/logout",
   validateReq(refreshTokenValidationSchema),
   asyncHandler(logout),
 );
 
-//logout from all
-router.get(
-  "/logout-all",
-  // validateReq(loginValidationSchema),
-  asyncHandler(logoutAll),
-);
+// GET /logout-all
+// Description: Logs the user out of all active sessions.
+// Validation: authenticated access token
+router.get("/logout-all", asyncHandler(logoutAll));
 
-//forgot password
+// POST /forgot-password
+// Description: Sends a password-reset OTP or link to the user's email address.
+// Validation: email
 router.post(
   "/forgot-password",
   validateReq(forgotPasswordSchema),
   asyncHandler(forgotPassword),
 );
 
-//reset password
+// POST /reset-password
+// Description: Resets the user's password using a valid reset token or OTP.
+// Validation: email, OTP or reset token, new password
 router.post(
   "/reset-password",
   validateReq(resetPasswordSchema),

@@ -154,3 +154,22 @@ export const createProjectValidationObject = z
 export const createProjectValidationSchema = createRequestSchema({
   body: createProjectValidationObject,
 });
+
+// ============= Secret Schemas =============
+
+export const createSecretValidationObject = z
+  .object({
+    projectId: objectIdValidator,
+    key: z.string().trim().min(1, "Secret key is required"),
+    description: descriptionValidator,
+    encryptedValue: z.string().min(1, "Encrypted secret value is required"),
+    environment: z
+      .enum(["development", "staging", "production"])
+      .default("development")
+      .optional(),
+  })
+  .strict();
+
+export const createSecretValidationSchema = createRequestSchema({
+  body: createSecretValidationObject,
+});

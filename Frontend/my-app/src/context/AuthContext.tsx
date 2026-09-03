@@ -10,6 +10,7 @@ import {
 } from "react";
 import {
   forgotPasswordUser,
+  setCurrentAccessToken,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -50,12 +51,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await refreshAccessToken();
 
       if (response.success && response.data?.accessToken) {
-        setAccessToken(response.data.accessToken as string);
+        const token = response.data.accessToken as string;
+        setCurrentAccessToken(token);
+        setAccessToken(token);
         return;
       }
 
+      setCurrentAccessToken(null);
       setAccessToken(null);
     } catch {
+      setCurrentAccessToken(null);
       setAccessToken(null);
     }
   };
@@ -87,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const token = response.data?.accessToken;
     if (token) {
+      setCurrentAccessToken(token);
       setAccessToken(token);
       setPendingEmail(null);
       return;
@@ -107,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const token = response.data?.accessToken;
     if (token) {
+      setCurrentAccessToken(token);
       setAccessToken(token);
       setPendingEmail(null);
       return;
@@ -149,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setAccessToken(null);
+    setCurrentAccessToken(null);
     setPendingEmail(null);
   };
 

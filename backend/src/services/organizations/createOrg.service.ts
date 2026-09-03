@@ -41,3 +41,40 @@ export const handleCreateOrg = async (
   };
   return res;
 };
+
+export const handleListOrganizations = async (ownerId: string) => {
+  const organizations = await OrgRepository.getOrganizationsByOwner(ownerId);
+
+  const res: ResponseData = {
+    success: true,
+    message: "Organizations fetched successfully",
+    data: organizations,
+    statusCode: 200,
+  };
+  return res;
+};
+
+export const handleDeleteOrganization = async (
+  organizationId: string,
+  ownerId: string,
+) => {
+  const organization = await OrgRepository.deleteOrganizationByOwner(
+    organizationId,
+    ownerId,
+  );
+
+  const res: ResponseData = organization
+    ? {
+        success: true,
+        message: "Organization deleted successfully",
+        data: organization,
+        statusCode: 200,
+      }
+    : {
+        success: false,
+        message: "Organization not found",
+        data: null,
+        statusCode: 404,
+      };
+  return res;
+};
