@@ -2,7 +2,7 @@ import { otpRepository } from "../../repository/otp.repository.js";
 import { otpEmailTemplate } from "../../templates/otp.template.js";
 import type { ResponseData } from "../../types/reqRes.js";
 import { createHash } from "../../utils/hash.js";
-import { sendEmail } from "../nodemailer.service.js";
+import { sendEmail } from "../mailjet.service.js";
 
 export const handleResendOtp = async (email: string) => {
   const otpDoc = await otpRepository.findOtp(email);

@@ -10,6 +10,8 @@ const schema = z.object({
   GOOGLE_CLIENT_SECRET: z.string(),
   GOOGLE_REFRESH_TOKEN: z.string(),
   GOOGLE_USER: z.string(),
+  MJ_APIKEY_PUBLIC: z.string(),
+  MJ_APIKEY_PRIVATE: z.string(),
 });
 
 export default schema;

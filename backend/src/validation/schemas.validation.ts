@@ -49,6 +49,15 @@ export const otpValidator = z
   .length(6, "OTP must be exactly 6 digits")
   .regex(/^\d+$/, "OTP must contain only digits");
 
+export const objectIdValidator = z
+  .string("ID must be a string")
+  .regex(/^[0-9a-fA-F]{24}$/, "Invalid MongoDB ObjectId format");
+
+export const descriptionValidator = z
+  .string("Description must be a string")
+  .max(500, "Description must not exceed 500 characters")
+  .optional();
+
 // ============= Common Pagination Validators =============
 
 export const paginationValidator = z.object({

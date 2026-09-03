@@ -24,6 +24,7 @@ import {
   signupValidationSchema,
   verifyOtpValidationSchema,
 } from "../validation/routes.validation.js";
+import { verifyAccessToken } from "../middlewares/auth.middleware.js";
 
 const router: Router = Router();
 
@@ -41,11 +42,7 @@ router.post(
  * POST / refresh-token
  * Validates: refresh the access token using refresh token
  */
-router.get(
-  "/refresh-token",
-  // validateReq(refreshTokenValidationSchema),
-  asyncHandler(refreshToken),
-);
+router.get("/refresh-token", asyncHandler(refreshToken));
 
 /**
  * POST / verify-otp

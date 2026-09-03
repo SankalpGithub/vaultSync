@@ -12,6 +12,8 @@ import {
   nameValidator,
   usernameValidator,
   otpValidator,
+  objectIdValidator,
+  descriptionValidator,
 } from "./schemas.validation.js";
 import { createRequestSchema } from "./requestSchema.js";
 
@@ -112,4 +114,43 @@ export const resetPasswordValidationObject = z
   .strict();
 export const resetPasswordSchema = createRequestSchema({
   body: resetPasswordValidationObject,
+});
+
+// ============= Organization Schemas =============
+
+/**
+ * Create organization endpoint validation
+ * Validates: body (name, description, visibility)
+ * Note: ownerId is taken from authenticated request (req.userId)
+ */
+export const createOrgValidationObject = z
+  .object({
+    name: nameValidator,
+    description: descriptionValidator,
+    visibility: z.enum(["private", "internal"]).default("private").optional(),
+  })
+  .strict();
+
+export const createOrgValidationSchema = createRequestSchema({
+  body: createOrgValidationObject,
+});
+
+// ============= Project Schemas =============
+
+/**
+ * Create project endpoint validation
+ * Validates: body (name, orgId, description, visibility)
+ * Note: ownerId is taken from authenticated request (req.userId)
+ */
+export const createProjectValidationObject = z
+  .object({
+    name: nameValidator,
+    orgId: objectIdValidator,
+    description: descriptionValidator,
+    visibility: z.enum(["private", "internal"]).default("private").optional(),
+  })
+  .strict();
+
+export const createProjectValidationSchema = createRequestSchema({
+  body: createProjectValidationObject,
 });

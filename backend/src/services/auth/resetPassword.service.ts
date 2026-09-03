@@ -6,7 +6,7 @@ import crypto from "crypto";
 import { env } from "../../configs/env.config.js";
 import fs from "fs";
 import path from "path";
-import { sendEmail } from "../nodemailer.service.js";
+import { sendEmail } from "../mailjet.service.js";
 import type { IUser } from "../../types/models/Iuser.js";
 import { sessionRepository } from "../../repository/session.repository.js";
 

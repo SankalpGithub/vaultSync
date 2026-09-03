@@ -11,7 +11,7 @@ import { env } from "../../configs/env.config.js";
 import { sessionRepository } from "../../repository/session.repository.js";
 import type { Isession } from "../../types/models/Isession.js";
 import type { ItokenPayload } from "../../types/tokenPayload.js";
-import { sendEmail } from "../nodemailer.service.js";
+import { sendEmail } from "../mailjet.service.js";
 import { generateOtp } from "../../utils/generateOtp.js";
 
 export const register = async (body: Iregister) => {
