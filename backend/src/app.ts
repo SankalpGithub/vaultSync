@@ -6,9 +6,10 @@ import helmet from "helmet";
 import router from "./routes/root.routes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import { env } from "node:process";
 
 const app: Express = express();
-const frontendUrl = "http://localhost:3000";
+const frontendUrl = env.FRONTEND_URL;
 
 app.use(
   cors({
