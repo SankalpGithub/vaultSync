@@ -4,8 +4,20 @@ import orgRouter from "./org.routes.js";
 import projectRouter from "./project.routes.js";
 import secretRouter from "./secret.routes.js";
 import { verifyAccessToken } from "../middlewares/auth.middleware.js";
+import { sendResponse } from "../utils/responseHandler.js";
 
 const router: Router = Router();
+
+router.get("/health", (_req, res) => {
+  return sendResponse(res, {
+    success: true,
+    message: "Service is healthy",
+    data: {
+      status: "ok",
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
 
 // /auth/*
 // Description: Mounts authentication, account, and session routes.
