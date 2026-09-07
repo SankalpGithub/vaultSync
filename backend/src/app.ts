@@ -7,9 +7,14 @@ import router from "./routes/root.routes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { env } from "node:process";
+import { logger } from "./utils/logger.js";
 
 const app: Express = express();
 const frontendUrl = env.FRONTEND_URL;
+
+logger.info({
+  message: `url: ${frontendUrl}`,
+});
 
 app.use(
   cors({
