@@ -26,7 +26,7 @@ export interface ForgotPasswordPayload {
   email: string;
 }
 
-const API_PREFIX = "http://localhost:5000/api/v1/auth";
+const API_PREFIX = `${process.env.NEXT_PUBLIC_API_PREFIX}/auth`;
 
 let currentAccessToken: string | null = null;
 

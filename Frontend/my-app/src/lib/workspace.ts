@@ -56,7 +56,7 @@ export interface CreateSecretPayload {
   environment: SecretEnvironment;
 }
 
-const API_PREFIX = "http://localhost:5000/api/v1";
+const API_PREFIX = process.env.NEXT_PUBLIC_API_PREFIX;
 
 let refreshPromise: Promise<string | null> | null = null;
 
