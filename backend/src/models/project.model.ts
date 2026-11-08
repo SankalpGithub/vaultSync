@@ -1,5 +1,18 @@
 import { model, Schema, Types } from "mongoose";
-import type { IProject } from "../types/models/Iproject.js";
+import type { IEnvironment, IProject } from "../types/models/Iproject.js";
+
+const environmentSchema = new Schema<IEnvironment>({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true,
+  },
+  isDefault: {
+    type: Boolean,
+    default: false,
+  },
+});
 
 const projectSchema = new Schema<IProject>(
   {
@@ -35,6 +48,14 @@ const projectSchema = new Schema<IProject>(
       type: String,
       enum: ["private", "internal"],
       default: "private",
+    },
+    environments: {
+      type: [environmentSchema],
+      default: () => [
+        { _id: new Types.ObjectId(), name: "development", isDefault: true },
+        { _id: new Types.ObjectId(), name: "staging", isDefault: true },
+        { _id: new Types.ObjectId(), name: "production", isDefault: true },
+      ],
     },
     lastModifiedBy: {
       type: Schema.Types.ObjectId,

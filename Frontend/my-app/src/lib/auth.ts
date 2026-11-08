@@ -98,6 +98,13 @@ export async function forgotPasswordUser(payload: ForgotPasswordPayload) {
   });
 }
 
+export async function resetPasswordUser(token: string, newPassword: string) {
+  return request("/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, newPassword }),
+  });
+}
+
 export async function logoutUser() {
   return request("/logout", {
     method: "GET",

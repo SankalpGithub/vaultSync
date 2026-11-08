@@ -29,12 +29,19 @@ export interface Project {
   name: string;
   description?: string;
   orgId: string;
+  environments: ProjectEnvironment[];
   visibility: WorkspaceVisibility;
   status: "active" | "archived";
   createdAt: string;
 }
 
-export type SecretEnvironment = "development" | "staging" | "production";
+export interface ProjectEnvironment {
+  _id: string;
+  name: string;
+  isDefault: boolean;
+}
+
+export type SecretEnvironment = string;
 
 export interface Secret {
   _id: string;
@@ -54,6 +61,11 @@ export interface CreateSecretPayload {
   description?: string;
   encryptedValue: string;
   environment: SecretEnvironment;
+}
+
+export interface UpdateSecretPayload {
+  key?: string;
+  value?: string;
 }
 
 const API_PREFIX = process.env.NEXT_PUBLIC_API_PREFIX;
@@ -90,7 +102,7 @@ async function request<T>(
 ): Promise<ApiResponse<T>> {
   const makeRequest = (token: string) => {
     const headers = new Headers(init.headers);
-    headers.set("authorization", `Bearer ${token}`);
+    headers.set("Authorization", `Bearer ${token}`);
 
     if (init.body && !headers.has("content-type")) {
       headers.set("content-type", "application/json");
@@ -144,6 +156,43 @@ export function listProjects(accessToken: string) {
   return request<Project[]>("/project", accessToken);
 }
 
+export function createProjectEnvironment(
+  projectId: string,
+  name: string,
+  accessToken: string,
+) {
+  return request<ProjectEnvironment>(
+    `/project/${encodeURIComponent(projectId)}/environments`,
+    accessToken,
+    { method: "POST", body: JSON.stringify({ name }) },
+  );
+}
+
+export function renameProjectEnvironment(
+  projectId: string,
+  environmentId: string,
+  name: string,
+  accessToken: string,
+) {
+  return request<ProjectEnvironment>(
+    `/project/${encodeURIComponent(projectId)}/environments/${encodeURIComponent(environmentId)}`,
+    accessToken,
+    { method: "PATCH", body: JSON.stringify({ name }) },
+  );
+}
+
+export function deleteProjectEnvironment(
+  projectId: string,
+  environmentId: string,
+  accessToken: string,
+) {
+  return request(
+    `/project/${encodeURIComponent(projectId)}/environments/${encodeURIComponent(environmentId)}`,
+    accessToken,
+    { method: "DELETE" },
+  );
+}
+
 export function listSecrets(projectId: string, accessToken: string) {
   return request<Secret[]>(
     `/secret?projectId=${encodeURIComponent(projectId)}`,
@@ -157,6 +206,17 @@ export function createSecret(
 ) {
   return request<Secret>("/secret/create", accessToken, {
     method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateSecret(
+  secretId: string,
+  payload: UpdateSecretPayload,
+  accessToken: string,
+) {
+  return request<Secret>(`/secret/${encodeURIComponent(secretId)}`, accessToken, {
+    method: "PATCH",
     body: JSON.stringify(payload),
   });
 }

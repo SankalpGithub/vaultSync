@@ -1,6 +1,6 @@
 import type { Types } from "mongoose";
 
-export type SecretEnvironment = "development" | "staging" | "production";
+export type SecretEnvironment = string;
 
 export interface ISecret {
   _id: Types.ObjectId;

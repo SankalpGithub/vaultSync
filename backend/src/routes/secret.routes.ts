@@ -5,9 +5,13 @@ import {
   deleteSecret,
   getSecretValue,
   listSecrets,
+  updateSecret,
 } from "../controllers/secret.controller.js";
 import { validateReq } from "../middlewares/reqValidator.middleware.js";
-import { createSecretValidationSchema } from "../validation/routes.validation.js";
+import {
+  createSecretValidationSchema,
+  updateSecretValidationSchema,
+} from "../validation/routes.validation.js";
 
 const router: Router = Router();
 
@@ -16,6 +20,11 @@ const router: Router = Router();
 // Validation: authenticated access token
 router.get("/", asyncHandler(listSecrets));
 router.get("/:secretId", asyncHandler(getSecretValue));
+router.patch(
+  "/:secretId",
+  validateReq(updateSecretValidationSchema),
+  asyncHandler(updateSecret),
+);
 
 // DELETE /:secretId
 // Description: Deletes an secret by its ID.

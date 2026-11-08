@@ -24,8 +24,6 @@ const secretSchema = new Schema<ISecret>(
     },
     environment: {
       type: String,
-      enum: ["development", "staging", "production"],
-      default: "development",
       required: true,
     },
     version: {

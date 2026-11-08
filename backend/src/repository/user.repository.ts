@@ -1,5 +1,6 @@
 import { User } from "../models/user.models.js";
 import type { IUserCreate } from "../types/models/Iuser.js";
+import { Types } from "mongoose";
 
 const findUser = async (
   query: Partial<{
@@ -13,6 +14,23 @@ const findUser = async (
 
 const createUser = async (user: IUserCreate) => {
   return await User.create(user);
+};
+
+const findUsersByIds = async (userIds: string[]) => {
+  return await User.find({
+    _id: { $in: userIds.map((userId) => new Types.ObjectId(userId)) },
+  }).select("_id email name");
+};
+
+const findUsersByEmails = async (emails: string[]) => {
+  return await User.find({
+    email: {
+      $in: emails.map(
+        (email) =>
+          new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+      ),
+    },
+  }).select("_id email name");
 };
 
 const updateUserEmailverifyStatus = async (userId: string, status: boolean) => {
@@ -51,6 +69,8 @@ const updatePassword = async (userId: string | undefined, password: string) => {
 export const UserRepository = {
   findUser,
   createUser,
+  findUsersByIds,
+  findUsersByEmails,
   updateUserEmailverifyStatus,
   updateResetPasswordField,
   updatePassword,

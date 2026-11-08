@@ -15,6 +15,7 @@ import {
   logoutUser,
   refreshAccessToken,
   resendOtpUser,
+  resetPasswordUser,
   signupUser,
   verifyOtpUser,
   type LoginPayload,
@@ -32,6 +33,7 @@ type AuthContextValue = {
   verifyOtp: (email: string, otp: string) => Promise<void>;
   resendOtp: (email: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<string>;
+  resetPassword: (token: string, newPassword: string) => Promise<string>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
 };
@@ -147,6 +149,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.message;
   };
 
+  const resetPassword = async (token: string, newPassword: string) => {
+    setError(null);
+    const response = await resetPasswordUser(token, newPassword);
+
+    if (!response.success) {
+      setError(response.message);
+      throw new Error(response.message);
+    }
+
+    return response.message;
+  };
+
   const logout = async () => {
     setError(null);
     try {
@@ -172,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       verifyOtp,
       resendOtp,
       forgotPassword,
+      resetPassword,
       logout,
       refreshSession,
     }),

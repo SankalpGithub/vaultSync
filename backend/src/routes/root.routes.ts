@@ -3,6 +3,7 @@ import authRouter from "./auth.routes.js";
 import orgRouter from "./org.routes.js";
 import projectRouter from "./project.routes.js";
 import secretRouter from "./secret.routes.js";
+import shareRouter from "./share.routes.js";
 import { verifyAccessToken } from "../middlewares/auth.middleware.js";
 import { sendResponse } from "../utils/responseHandler.js";
 
@@ -37,5 +38,8 @@ router.use("/project", verifyAccessToken, projectRouter);
 // Description: Manage secrets
 //validation: authenticatino access token
 router.use("/secret", verifyAccessToken, secretRouter);
+
+// /share/*
+router.use("/share", verifyAccessToken, shareRouter);
 
 export default router;

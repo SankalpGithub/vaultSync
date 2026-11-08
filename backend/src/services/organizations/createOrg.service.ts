@@ -2,6 +2,8 @@ import { Types } from "mongoose";
 import { OrgRepository } from "../../repository/organization.repository.js";
 import type { ResponseData } from "../../types/reqRes.js";
 import type { ICreateOrg } from "../../types/models/Iorganization.js";
+import { getActiveResourceIds } from "../sharing/access.service.js";
+import { Org } from "../../models/organization.model.js";
 
 export const handleCreateOrg = async (
   name: string,
@@ -43,7 +45,20 @@ export const handleCreateOrg = async (
 };
 
 export const handleListOrganizations = async (ownerId: string) => {
-  const organizations = await OrgRepository.getOrganizationsByOwner(ownerId);
+  const owned = await OrgRepository.getOrganizationsByOwner(ownerId);
+  const sharedIds = await getActiveResourceIds(ownerId, "organization");
+  const shared = sharedIds.length
+    ? await Org.find({
+        _id: { $in: sharedIds.map((id) => new Types.ObjectId(id)) },
+        isDeleted: false,
+      }).sort({ createdAt: -1 })
+    : [];
+  const organizations = [
+    ...owned,
+    ...shared.filter(
+      (item) => !owned.some((ownedItem) => ownedItem._id.toString() === item._id.toString()),
+    ),
+  ];
 
   const res: ResponseData = {
     success: true,

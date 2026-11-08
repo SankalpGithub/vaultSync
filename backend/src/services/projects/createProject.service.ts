@@ -2,6 +2,8 @@ import { Types } from "mongoose";
 import type { ResponseData } from "../../types/reqRes.js";
 import { ProjectRepository } from "../../repository/project.repository.js";
 import type { ICreateProject } from "../../types/models/Iproject.js";
+import { getActiveResourceIds } from "../sharing/access.service.js";
+import { Project } from "../../models/project.model.js";
 
 export const handleCreateProject = async (
   name: string,
@@ -49,7 +51,20 @@ export const handleCreateProject = async (
 };
 
 export const handleListProjects = async (ownerId: string) => {
-  const projects = await ProjectRepository.getProjectsByOwner(ownerId);
+  const owned = await ProjectRepository.getProjectsByOwner(ownerId);
+  const sharedIds = await getActiveResourceIds(ownerId, "project");
+  const shared = sharedIds.length
+    ? await Project.find({
+        _id: { $in: sharedIds.map((id) => new Types.ObjectId(id)) },
+        isDeleted: false,
+      }).sort({ createdAt: -1 })
+    : [];
+  const projects = [
+    ...owned,
+    ...shared.filter(
+      (item) => !owned.some((ownedItem) => ownedItem._id.toString() === item._id.toString()),
+    ),
+  ];
 
   const res: ResponseData = {
     success: true,

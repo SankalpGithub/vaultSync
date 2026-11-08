@@ -24,7 +24,8 @@ The frontend currently uses `http://localhost:5000/api/v1/auth`.
 
 The service `statusCode` controls the HTTP status and is not included in the JSON response by `sendResponse`.
 
-No route currently declares role or permission requirements. No access-token authorization middleware was found.
+Project routes require a valid access token. Creating a project environment is
+restricted to the project owner.
 
 ## Validation rules
 
@@ -33,6 +34,7 @@ Auth request bodies use strict Zod objects unless otherwise noted. Unknown body 
 - Email: trimmed string in email format.
 - Password on signup: string, minimum 8 characters.
 - Name: string, 2 to 100 characters.
+- Project environment name: trimmed string, 1 to 50 characters.
 - Username: string, 3 to 50 characters, letters/numbers/hyphens/underscores only.
 - OTP: exactly six numeric characters.
 
@@ -239,10 +241,104 @@ refreshToken=<jwt>
 
 **Errors:** `400` validation; invalid or expired token returns HTTP `404` with `success: false`; other failures become `500`.
 
+### POST `/project/:projectId/environments`
+
+**Authentication:** Requires a valid access token in the `Authorization: Bearer <token>` header. The authenticated user must own the project.
+
+Adds a custom environment to the project.
+
+**Request body**
+
+```json
+{ "name": "qa" }
+```
+
+**Validation:** `projectId` must be a MongoDB ObjectId. `name` is required, trimmed, and limited to 50 characters; the stored name is lowercase. The body and path parameters are strict.
+
+**Success:** HTTP `201`. The new environment is returned with `isDefault: false`.
+
+```json
+{
+  "success": true,
+  "message": "Environment created successfully",
+  "data": { "name": "qa", "isDefault": false }
+}
+```
+
+**Errors:** `400` for invalid input; `404` when the project does not exist or is not owned by the authenticated user; `409` if the project already has an environment with that name, ignoring case.
+
+Secrets can only be assigned to environments configured on their project. If a
+secret request omits `environment`, it defaults to `development`.
+
+### PATCH `/secret/:secretId`
+
+**Authentication:** Requires a valid access token.
+
+Updates a secret's key, value, or both. Either field may be omitted to preserve
+its current value. Any supplied secret value is encrypted by the server. The
+secret version is incremented, and the authenticated user is recorded as the
+updater.
+
+**Request body**
+
+```json
+{
+  "key": "DATABASE_URL",
+  "value": "new-secret-value"
+}
+```
+
+**Validation:** `secretId` must be a MongoDB ObjectId. `key` and `value` are
+optional non-empty strings, but at least one must be provided. The body and
+path parameters are strict.
+
+**Success:** HTTP `200`, with the updated secret in `data`.
+
+**Errors:** `400` for invalid input; `404` if the secret is not found; `409` if
+another secret in the same environment already uses the requested key.
+
+### PATCH `/project/:projectId/environments/:environmentId`
+
+**Authentication:** Requires a valid access token. The authenticated user must own the project.
+
+Renames a non-default environment.
+
+**Request body**
+
+```json
+{ "name": "qa" }
+```
+
+**Validation:** Both path IDs must be MongoDB ObjectIds. The trimmed name is required and limited to 50 characters; it is stored lowercase.
+
+**Success:** HTTP `200`, with the renamed environment in `data`.
+
+Existing active secrets in the environment are moved to the new environment name.
+
+**Errors:** `400` for invalid input or an attempt to rename a default environment; `404` if the project or environment is not found; `409` if another environment in the project already has the requested name, ignoring case.
+
+### DELETE `/project/:projectId/environments/:environmentId`
+
+**Authentication:** Requires a valid access token. The authenticated user must own the project.
+
+Deletes a non-default environment.
+
+**Success:** HTTP `200`.
+
+```json
+{
+  "success": true,
+  "message": "Environment deleted successfully",
+  "data": null
+}
+```
+
+**Errors:** `400` for an attempt to delete a default environment; `404` if the project or environment is not found.
+
 ## Client cookie behavior
 
 The frontend sends `credentials: "include"`. The server sets the cookie as HTTP-only, secure, strict same-site, and seven days. `secure: true` means local HTTP behavior may require environment-specific handling.
 
 ## Not found
 
-No OpenAPI/Swagger specification, health endpoint, user profile endpoint, project endpoint, secret endpoint, or authorization-protected endpoint was found.
+No OpenAPI/Swagger specification was found.

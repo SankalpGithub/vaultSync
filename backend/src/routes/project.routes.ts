@@ -2,11 +2,19 @@ import { Router } from "express";
 import { asyncHandler } from "../middlewares/asycHandler.middleware.js";
 import {
   createProject,
+  createProjectEnvironment,
+  deleteProjectEnvironment,
   deleteProject,
   listProjects,
+  renameProjectEnvironment,
 } from "../controllers/project.controller.js";
 import { validateReq } from "../middlewares/reqValidator.middleware.js";
-import { createProjectValidationSchema } from "../validation/routes.validation.js";
+import {
+  createProjectEnvironmentValidationSchema,
+  createProjectValidationSchema,
+  deleteProjectEnvironmentValidationSchema,
+  renameProjectEnvironmentValidationSchema,
+} from "../validation/routes.validation.js";
 
 const router: Router = Router();
 
@@ -22,6 +30,30 @@ router.post(
   "/create",
   validateReq(createProjectValidationSchema),
   asyncHandler(createProject),
+);
+
+// POST /:projectId/environments
+// Description: Adds an environment to a project owned by the authenticated user.
+router.post(
+  "/:projectId/environments",
+  validateReq(createProjectEnvironmentValidationSchema),
+  asyncHandler(createProjectEnvironment),
+);
+
+// PATCH /:projectId/environments/:environmentId
+// Description: Renames a non-default environment in an owned project.
+router.patch(
+  "/:projectId/environments/:environmentId",
+  validateReq(renameProjectEnvironmentValidationSchema),
+  asyncHandler(renameProjectEnvironment),
+);
+
+// DELETE /:projectId/environments/:environmentId
+// Description: Deletes a non-default environment in an owned project.
+router.delete(
+  "/:projectId/environments/:environmentId",
+  validateReq(deleteProjectEnvironmentValidationSchema),
+  asyncHandler(deleteProjectEnvironment),
 );
 
 // DELETE /:projectId

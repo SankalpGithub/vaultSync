@@ -109,7 +109,9 @@ export const forgotPasswordSchema = createRequestSchema({
 export const resetPasswordValidationObject = z
   .object({
     token: z.string("Token Required"),
-    newPassword: z.string("New password Required"),
+    newPassword: z
+      .string("New password Required")
+      .min(8, "Password must be at least 8 characters"),
   })
   .strict();
 export const resetPasswordSchema = createRequestSchema({
@@ -155,6 +157,47 @@ export const createProjectValidationSchema = createRequestSchema({
   body: createProjectValidationObject,
 });
 
+export const createProjectEnvironmentValidationSchema = createRequestSchema({
+  params: z
+    .object({
+      projectId: objectIdValidator,
+    })
+    .strict(),
+  body: z
+    .object({
+      name: z
+        .string("Environment name must be a string")
+        .trim()
+        .min(1, "Environment name is required")
+        .max(50, "Environment name must not exceed 50 characters"),
+    })
+    .strict(),
+});
+
+const projectEnvironmentParams = z
+  .object({
+    projectId: objectIdValidator,
+    environmentId: objectIdValidator,
+  })
+  .strict();
+
+export const renameProjectEnvironmentValidationSchema = createRequestSchema({
+  params: projectEnvironmentParams,
+  body: z
+    .object({
+      name: z
+        .string("Environment name must be a string")
+        .trim()
+        .min(1, "Environment name is required")
+        .max(50, "Environment name must not exceed 50 characters"),
+    })
+    .strict(),
+});
+
+export const deleteProjectEnvironmentValidationSchema = createRequestSchema({
+  params: projectEnvironmentParams,
+});
+
 // ============= Secret Schemas =============
 
 export const createSecretValidationObject = z
@@ -164,7 +207,10 @@ export const createSecretValidationObject = z
     description: descriptionValidator,
     encryptedValue: z.string().min(1, "Encrypted secret value is required"),
     environment: z
-      .enum(["development", "staging", "production"])
+      .string()
+      .trim()
+      .min(1, "Environment is required")
+      .max(50, "Environment must not exceed 50 characters")
       .default("development")
       .optional(),
   })
@@ -172,4 +218,51 @@ export const createSecretValidationObject = z
 
 export const createSecretValidationSchema = createRequestSchema({
   body: createSecretValidationObject,
+});
+
+export const updateSecretValidationSchema = createRequestSchema({
+  params: z
+    .object({
+      secretId: objectIdValidator,
+    })
+    .strict(),
+  body: z
+    .object({
+      key: z.string().trim().min(1, "Secret key cannot be empty").optional(),
+      value: z.string().min(1, "Secret value is required").optional(),
+    })
+    .strict()
+    .refine(
+      ({ key, value }) => key !== undefined || value !== undefined,
+      "Provide a new key or value",
+    ),
+});
+
+// ============= Sharing Schemas =============
+
+export const sendShareInvitationValidationSchema = createRequestSchema({
+  body: z
+    .object({
+      recipientEmails: z
+        .array(z.string().trim().email("Invalid recipient email"))
+        .min(1, "At least one recipient email is required"),
+      orgId: objectIdValidator,
+      orgPermissions: z.array(z.string()).default([]),
+      projectId: z.array(objectIdValidator).default([]),
+      projectPermissions: z.array(z.string()).default([]),
+      environment: z
+        .array(
+          z.object({
+            envId: objectIdValidator,
+            permissions: z.array(z.string()).default([]),
+          }),
+        )
+        .default([]),
+      secretId: z.array(objectIdValidator).default([]),
+      secretPermission: z.array(z.string()).default([]),
+      role: z.string().trim().min(1, "Role is required"),
+      message: z.string().trim().max(500).optional(),
+      expiresAt: z.string().datetime().optional(),
+    })
+    .strict(),
 });

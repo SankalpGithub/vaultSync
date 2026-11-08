@@ -1,10 +1,8 @@
 # Secret Management System
 
-Secret Management System is a repository for a planned application that will
-manage application secrets across developers and environments. The currently
-implemented backend provides an Express/MongoDB authentication service; the
-project and secret-management capabilities described in the planning material
-are not yet wired into the backend runtime.
+Secret Management System manages application secrets across developers and
+environments. The backend provides an Express/MongoDB authentication service
+and project and secret-management APIs.
 
 ## Technologies
 
@@ -23,9 +21,10 @@ Client -> Express app -> route -> validation -> controller
 	-> service -> repository -> Mongoose model -> MongoDB
 ```
 
-The backend currently mounts authentication at `/api/v1/auth`. It implements
-signup, OTP verification/resend, login, refresh, logout, logout-all, and
-password reset. No authorization middleware or project/secret API was found.
+The backend mounts authentication at `/api/v1/auth`, organization routes at
+`/api/v1/org`, project routes at `/api/v1/project`, and secret routes at
+`/api/v1/secret`. The secret APIs encrypt values on the backend before storing
+them; see the [secret data flow and encryption guide](backend/docs/secret-data-flow.md).
 
 ## Prerequisites
 
@@ -76,6 +75,7 @@ exits with an error. No backend lint or formatting script is declared. Run
 - [Architecture](docs/architecture.md)
 - [Project structure](docs/project-structure.md)
 - [API reference](docs/api.md)
+- [Secret data flow and encryption](backend/docs/secret-data-flow.md)
 - [Database](docs/database.md)
 - [Authentication](docs/authentication.md)
 - [Error handling](docs/error-handling.md)
@@ -83,6 +83,7 @@ exits with an error. No backend lint or formatting script is declared. Run
 - [Deployment](docs/deployment.md)
 - [Development guide](docs/development.md)
 - [Architecture decisions](docs/decisions/README.md)
+- [RBAC permissions planning](documentation/planning/rbac-permissions-planning.md)
 
 ## Important development notes
 

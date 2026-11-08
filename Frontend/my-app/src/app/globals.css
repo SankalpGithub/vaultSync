@@ -2143,6 +2143,59 @@ code {
 .secret-list-panel {
   margin-top: 25px;
 }
+.environment-list-controls {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+.environment-list-controls label,
+.environment-create-form label {
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  font-weight: 720;
+  gap: 7px;
+}
+.environment-list-controls .auth-input,
+.environment-create-form .auth-input {
+  margin: 0;
+  min-width: 170px;
+}
+.environment-manager {
+  border-top: 1px solid var(--line);
+  margin-top: 20px;
+  padding-top: 18px;
+}
+.environment-create-form {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.environment-manager-list {
+  margin-top: 14px;
+}
+.environment-manager-row {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  display: flex;
+  font-size: 12px;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 8px 0;
+}
+.environment-manager-row > div {
+  display: flex;
+  gap: 8px;
+}
+.environment-manager-row small {
+  color: var(--muted);
+  font-size: 10px;
+}
 .secret-create-form {
   display: grid;
   gap: 16px;
@@ -2173,14 +2226,40 @@ code {
   border-top: 1px solid var(--line);
   margin-top: 25px;
 }
+.managed-secret-entry {
+  border-bottom: 1px solid var(--line);
+}
 .managed-secret-row {
   align-items: center;
-  border-bottom: 1px solid var(--line);
   display: grid;
   gap: 16px;
-  grid-template-columns: minmax(160px, 1fr) 130px minmax(140px, 0.9fr) 34px 25px;
+  grid-template-columns: minmax(160px, 1fr) 130px minmax(140px, 0.9fr) 34px minmax(90px, auto);
   min-width: 0;
   padding: 17px 0;
+}
+.managed-secret-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+.secret-edit-form {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1.25fr auto;
+  padding: 0 0 17px;
+}
+.secret-edit-form label {
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  font-weight: 720;
+  gap: 8px;
+}
+.secret-edit-form .auth-input {
+  margin: 0;
+  min-width: 0;
 }
 .managed-secret-name {
   min-width: 0;
@@ -2251,15 +2330,31 @@ code {
   .secret-create-form {
     grid-template-columns: 1fr;
   }
+  .secret-edit-form {
+    grid-template-columns: 1fr;
+  }
   .secret-description-field {
     grid-column: auto;
   }
   .secret-add-button {
     justify-self: start;
   }
+  .environment-list-controls {
+    align-items: stretch;
+    justify-content: flex-start;
+    width: 100%;
+  }
+  .environment-list-controls label,
+  .environment-list-controls .auth-input {
+    width: 100%;
+  }
   .managed-secret-row {
     gap: 10px;
     grid-template-columns: minmax(0, 1fr) 105px 34px 25px;
+  }
+  .managed-secret-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
   }
   .managed-secret-row code {
     display: none;

@@ -1,12 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
+
+function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token") ?? "";
+  const { resetPassword, error } = useAuth();
 
   const [form, setForm] = useState({
     password: "",
@@ -32,19 +43,24 @@ export default function ResetPasswordPage() {
     }
 
     setIsSubmitting(true);
+    setValidationError("");
 
-    // try {
-    //   await resetPassword({
-    //     password: form.password,
-    //     confirmPassword: form.confirmPassword,
-    //   });
+    if (!token) {
+      setValidationError("This reset link is invalid or incomplete.");
+      setIsSubmitting(false);
+      return;
+    }
 
-    //   router.push("/auth/login");
-    // } catch {
-    //   // Error is shown from auth context.
-    // } finally {
-    //   setIsSubmitting(false);
-    // }
+    try {
+      await resetPassword(token, form.password);
+      router.replace("/auth/login?passwordReset=success");
+    } catch (resetError) {
+      if (resetError instanceof Error && resetError.message) {
+        setValidationError(resetError.message);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -140,7 +156,7 @@ export default function ResetPasswordPage() {
               <p className="auth-error">{validationError}</p>
             ) : null}
 
-            {/* {error ? <p className="auth-error">{error}</p> : null} */}
+            {error ? <p className="auth-error">{error}</p> : null}
 
             <button
               className="button button-accent auth-submit"

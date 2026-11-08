@@ -5,6 +5,7 @@ import {
   handleDeleteSecret,
   handleGetSecrets,
   handleGetSecretValue,
+  handleUpdateSecret,
 } from "../services/secrets/createSecret.service.js";
 import type { AuthRequest, ResponseData } from "../types/reqRes.js";
 import { AppError } from "../utils/appError.js";
@@ -35,7 +36,7 @@ export const listSecrets = async (req: AuthRequest, res: Response) => {
     throw new AppError("Project ID is required", 400);
   }
 
-  const result: ResponseData = await handleGetSecrets(projectId);
+  const result: ResponseData = await handleGetSecrets(projectId, req.userId);
   sendResponse(res, result);
 };
 
@@ -45,7 +46,28 @@ export const getSecretValue = async (req: AuthRequest, res: Response) => {
     throw new AppError("Valid Secret ID is required", 400);
   }
 
-  const result: ResponseData = await handleGetSecretValue(secretId);
+  const result: ResponseData = await handleGetSecretValue(secretId, req.userId);
+  sendResponse(res, result);
+};
+
+export const updateSecret = async (req: AuthRequest, res: Response) => {
+  if (!req.userId) {
+    throw new AppError("User not authenticated", 401);
+  }
+
+  const secretId = req.params.secretId;
+  if (!secretId || Array.isArray(secretId)) {
+    throw new AppError("Valid Secret ID is required", 400);
+  }
+
+  const { key, value } = req.body;
+  const result: ResponseData = await handleUpdateSecret(
+    secretId,
+    key,
+    value,
+    req.userId,
+  );
+
   sendResponse(res, result);
 };
 

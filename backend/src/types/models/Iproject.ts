@@ -1,5 +1,11 @@
 import type { Types } from "mongoose";
 
+export interface IEnvironment {
+  _id?: Types.ObjectId;
+  name: string;
+  isDefault: boolean;
+}
+
 export interface IProject {
   _id: Types.ObjectId;
   name: string;
@@ -9,6 +15,7 @@ export interface IProject {
   status: "active" | "archived"; // Project status
   members?: Types.ObjectId[]; // Array of user IDs with access
   visibility: "private" | "internal"; // Visibility level
+  environments: IEnvironment[];
   lastModifiedBy?: Types.ObjectId; // Track who last modified
   isDeleted: boolean; // Soft delete flag
   deletedAt?: Date; // When deleted
