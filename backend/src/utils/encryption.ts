@@ -23,7 +23,11 @@ export const encryptSecret = (value: string): string => {
 export const decryptSecret = (value: string): string => {
   const [ivEncoded, authTagEncoded, ciphertextEncoded] = value.split(".");
 
-  if (!ivEncoded || !authTagEncoded || !ciphertextEncoded) {
+  if (
+    ivEncoded === undefined ||
+    authTagEncoded === undefined ||
+    ciphertextEncoded === undefined
+  ) {
     throw new Error("Invalid encrypted secret format");
   }
 

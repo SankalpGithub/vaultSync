@@ -34,6 +34,9 @@ and that its session exists and has not been revoked.
    the key, project, environment, and metadata in MongoDB.
 4. The response contains the secret record, not its plaintext value. The
    `encryptedValue` field is excluded from normal Mongoose query results.
+5. The secrets page can import a `.env` file into one selected environment.
+   Existing keys are skipped rather than overwritten, and empty values are
+   stored as empty secret values.
 
 ## Listing and revealing
 
@@ -44,6 +47,10 @@ and that its session exists and has not been revoked.
   `GET /api/v1/secret/:secretId`. The repository explicitly selects the
   ciphertext, the backend decrypts it, and the API returns
   `{ "value": "<plaintext>" }`. The frontend then displays the returned value.
+- Exporting a `.env` file reveals each selected-environment secret through the
+  same endpoint and downloads a plaintext file in the browser. The export is
+  aborted if any value cannot be revealed; downloaded files must be stored
+  securely.
 - Hiding the value removes it from the page's visible-value state. It does not
   erase copies that may exist elsewhere in browser or operating-system memory.
 

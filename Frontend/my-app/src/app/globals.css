@@ -2139,62 +2139,218 @@ code {
   line-height: 0.95;
   margin: 10px 0 15px;
 }
-.secret-create-panel,
 .secret-list-panel {
   margin-top: 25px;
 }
-.environment-list-controls {
+.secret-list-heading-actions {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+.secret-create-dialog .secret-create-form {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin-top: 20px;
+}
+.secret-create-dialog .secret-description-field {
+  grid-column: auto;
+}
+.secret-create-dialog .workspace-error {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.secret-create-dialog .secret-add-button {
+  min-height: 43px;
+}
+.secret-tools {
   align-items: end;
+  background: var(--surface-soft, #f7f5f0);
+  border: 1px solid var(--line);
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  justify-content: flex-end;
+  gap: 18px;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding: 16px;
 }
-.environment-list-controls label,
+.secret-environment-picker,
+.secret-environment-picker label,
 .environment-create-form label {
   color: var(--ink);
   display: flex;
   flex-direction: column;
+}
+.secret-environment-picker {
+  flex: 1 1 220px;
+  gap: 6px;
+  max-width: 320px;
+}
+.secret-environment-picker label,
+.environment-create-form label {
   font-size: 11px;
   font-weight: 720;
-  gap: 7px;
 }
-.environment-list-controls .auth-input,
+.secret-environment-picker .auth-input,
 .environment-create-form .auth-input {
   margin: 0;
-  min-width: 170px;
+  min-width: 0;
+  width: 100%;
 }
-.environment-manager {
-  border-top: 1px solid var(--line);
-  margin-top: 20px;
-  padding-top: 18px;
+.secret-environment-picker small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.secret-tools-actions {
+  align-items: end;
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.env-file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.env-export-button {
+  align-items: center;
+  display: inline-flex;
+  gap: 12px;
+  justify-content: center;
+}
+.env-file-help {
+  background: #fff8f1;
+  border-left: 2px solid var(--orange);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+  margin: 10px 2px 0;
+  padding: 9px 12px;
+}
+.env-file-progress {
+  align-items: center;
+  color: var(--ink);
+  display: flex;
+  font-size: 11px;
+  gap: 9px;
+  margin: 14px 0 0;
+}
+.env-file-spinner {
+  animation: env-file-spin 800ms linear infinite;
+  border: 2px solid var(--line);
+  border-right-color: var(--orange);
+  border-radius: 50%;
+  height: 14px;
+  width: 14px;
+}
+@keyframes env-file-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.environment-dialog-description {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 18px 0 0;
+  max-width: 580px;
 }
 .environment-create-form {
   align-items: end;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  margin-top: 20px;
+  max-width: 620px;
+}
+.environment-create-form label {
+  flex: 1 1 220px;
+  gap: 7px;
+}
+.environment-create-form button {
+  align-items: center;
+  display: inline-flex;
+  gap: 12px;
+  justify-content: center;
+  min-height: 43px;
+}
+.environment-dialog-list-heading {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  margin-top: 27px;
+  padding-bottom: 10px;
+}
+.environment-dialog-list-heading h3 {
+  color: var(--ink);
+  font-size: 12px;
+  margin: 0;
+}
+.environment-dialog-list-heading span {
+  color: var(--muted);
+  font-size: 10px;
 }
 .environment-manager-list {
-  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  margin-top: 12px;
 }
 .environment-manager-row {
   align-items: center;
-  border-top: 1px solid var(--line);
+  background: var(--surface-soft, #f7f5f0);
+  border: 1px solid var(--line);
   color: var(--ink);
   display: flex;
   font-size: 12px;
   justify-content: space-between;
-  min-height: 48px;
-  padding: 8px 0;
+  min-height: 58px;
+  padding: 9px 11px;
 }
 .environment-manager-row > div {
+  align-items: center;
   display: flex;
   gap: 8px;
 }
-.environment-manager-row small {
+.environment-rename-form {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-width: 0;
+}
+.environment-rename-form .auth-input {
+  flex: 1 1 130px;
+  margin: 0;
+  min-width: 0;
+  padding: 9px;
+}
+.environment-manager-name {
+  min-width: 0;
+}
+.environment-manager-name strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.environment-manager-dot {
+  background: var(--orange);
+  border-radius: 50%;
+  flex: 0 0 7px;
+  height: 7px;
+}
+.environment-default-badge {
+  background: var(--surface, #fff);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 9px;
+  padding: 3px 6px;
+}
+.environment-manager-row .environment-locked {
   color: var(--muted);
   font-size: 10px;
+  text-align: right;
 }
 .secret-create-form {
   display: grid;
@@ -2323,29 +2479,63 @@ code {
   .inline-form-fields {
     grid-template-columns: 1fr;
   }
+  .resource-dialog-form .inline-form-fields {
+    grid-template-columns: 1fr;
+  }
   .secrets-page-header {
     align-items: flex-start;
     flex-direction: column;
   }
-  .secret-create-form {
-    grid-template-columns: 1fr;
-  }
   .secret-edit-form {
     grid-template-columns: 1fr;
   }
-  .secret-description-field {
-    grid-column: auto;
+  .secret-create-dialog .secret-create-form {
+    grid-template-columns: 1fr;
+  }
+  .secret-list-heading-actions {
+    align-items: flex-end;
+    flex-direction: column-reverse;
+    gap: 8px;
   }
   .secret-add-button {
     justify-self: start;
   }
-  .environment-list-controls {
+  .secret-tools {
     align-items: stretch;
-    justify-content: flex-start;
+    flex-direction: column;
     width: 100%;
   }
-  .environment-list-controls label,
-  .environment-list-controls .auth-input {
+  .secret-environment-picker {
+    max-width: none;
+  }
+  .secret-tools-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .secret-tools-actions > button,
+  .env-file-actions,
+  .env-file-actions > button {
+    width: 100%;
+  }
+  .environment-manager-list {
+    grid-template-columns: 1fr;
+  }
+  .environment-create-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .environment-create-form button {
+    width: 100%;
+  }
+  .environment-manager-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .environment-manager-row > div:not(.environment-manager-name) {
+    align-self: flex-end;
+  }
+  .environment-rename-form {
     width: 100%;
   }
   .managed-secret-row {
@@ -2454,6 +2644,31 @@ code {
   overflow-y: auto;
   padding: 30px;
   width: 100%;
+}
+.share-dialog.resource-form-dialog {
+  max-width: 660px;
+}
+.resource-dialog-form .inline-form-fields {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 150px;
+  margin-top: 4px;
+}
+.resource-dialog-form .workspace-submit {
+  min-height: 43px;
+  width: fit-content;
+}
+.resource-dialog-context {
+  background: #f5f7f3;
+  border-left: 2px solid var(--orange);
+  color: var(--muted);
+  font-size: 11px;
+  margin: 0;
+  padding: 10px 12px;
+}
+.resource-dialog-context strong {
+  color: var(--ink);
+}
+.resource-dialog-form .workspace-error {
+  margin: 0;
 }
 .share-dialog-heading {
   align-items: flex-start;

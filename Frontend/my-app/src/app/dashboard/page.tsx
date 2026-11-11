@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { WorkspaceShell } from "@/components/WorkspaceShell";
 import { useAuth } from "@/context/AuthContext";
@@ -19,11 +20,12 @@ import {
 } from "@/lib/workspace";
 
 type Panel = "organization" | "project" | null;
+const SELECTED_ORGANIZATION_STORAGE_KEY = "vaultsync:selected-organization";
 
 type FormProps = {
   accessToken: string | null;
   onComplete: (message: string) => Promise<void>;
-  onError: (message: string) => void;
+  onCancel: () => void;
 };
 
 export default function DashboardPage() {
@@ -69,15 +71,36 @@ export default function DashboardPage() {
           return;
         }
         const nextOrganizations = organizationResponse.data ?? [];
+        let savedOrganizationId = "";
+        try {
+          savedOrganizationId =
+            window.localStorage.getItem(SELECTED_ORGANIZATION_STORAGE_KEY) ?? "";
+        } catch {
+          setError(
+            "Your browser could not restore the previously selected organization.",
+          );
+        }
+        const nextSelectedOrganizationId =
+          nextOrganizations.find(
+            (organization) => organization._id === savedOrganizationId,
+          )?._id ??
+          nextOrganizations[0]?._id ??
+          "";
         setOrganizations(nextOrganizations);
         setProjects(projectResponse.data ?? []);
-        setSelectedOrganizationId((currentId) =>
-          nextOrganizations.some(
-            (organization) => organization._id === currentId,
-          )
-            ? currentId
-            : (nextOrganizations[0]?._id ?? ""),
-        );
+        setSelectedOrganizationId(nextSelectedOrganizationId);
+        try {
+          if (nextSelectedOrganizationId) {
+            window.localStorage.setItem(
+              SELECTED_ORGANIZATION_STORAGE_KEY,
+              nextSelectedOrganizationId,
+            );
+          } else {
+            window.localStorage.removeItem(SELECTED_ORGANIZATION_STORAGE_KEY);
+          }
+        } catch {
+          setError("Your browser could not save the selected organization.");
+        }
       } catch {
         setError(
           "Workspace data could not be loaded. Check that the API is running.",
@@ -95,6 +118,22 @@ export default function DashboardPage() {
     }, 0);
     return () => window.clearTimeout(fetchWorkspace);
   }, [loadWorkspace]);
+
+  function handleOrganizationChange(organizationId: string) {
+    setSelectedOrganizationId(organizationId);
+    try {
+      if (organizationId) {
+        window.localStorage.setItem(
+          SELECTED_ORGANIZATION_STORAGE_KEY,
+          organizationId,
+        );
+      } else {
+        window.localStorage.removeItem(SELECTED_ORGANIZATION_STORAGE_KEY);
+      }
+    } catch {
+      setError("Your browser could not save the selected organization.");
+    }
+  }
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -140,6 +179,7 @@ export default function DashboardPage() {
   }
 
   const complete = async (message: string) => {
+    setError("");
     setStatus(message);
     setPanel(null);
     setEditingProject(null);
@@ -185,7 +225,9 @@ export default function DashboardPage() {
             className="organization-select"
             id="organization-select"
             value={selectedOrganizationId}
-            onChange={(event) => setSelectedOrganizationId(event.target.value)}
+            onChange={(event) =>
+              handleOrganizationChange(event.target.value)
+            }
             disabled={loading || organizations.length === 0}
           >
             {organizations.length === 0 ? (
@@ -228,30 +270,36 @@ export default function DashboardPage() {
       </section>
 
       {panel === "organization" ? (
-        <OrganizationForm
-          accessToken={accessToken}
-          onComplete={complete}
-          onError={setError}
-        />
+        <ResourceFormDialog onClose={() => setPanel(null)}>
+          <OrganizationForm
+            accessToken={accessToken}
+            onComplete={complete}
+            onCancel={() => setPanel(null)}
+          />
+        </ResourceFormDialog>
       ) : null}
       {panel === "project" ? (
-        <ProjectForm
-          key="create-project"
-          accessToken={accessToken}
-          organizationId={selectedOrganizationId}
-          onComplete={complete}
-          onError={setError}
-        />
+        <ResourceFormDialog onClose={() => setPanel(null)}>
+          <ProjectForm
+            key="create-project"
+            accessToken={accessToken}
+            organizationId={selectedOrganizationId}
+            organizationName={selectedOrganization?.name ?? ""}
+            onComplete={complete}
+            onCancel={() => setPanel(null)}
+          />
+        </ResourceFormDialog>
       ) : null}
       {editingProject ? (
-        <ProjectForm
-          key={editingProject._id}
-          accessToken={accessToken}
-          onComplete={complete}
-          onError={setError}
-          onCancel={() => setEditingProject(null)}
-          project={editingProject}
-        />
+        <ResourceFormDialog onClose={() => setEditingProject(null)}>
+          <ProjectForm
+            key={editingProject._id}
+            accessToken={accessToken}
+            onComplete={complete}
+            onCancel={() => setEditingProject(null)}
+            project={editingProject}
+          />
+        </ResourceFormDialog>
       ) : null}
 
       <section className="dashboard-panel overview-project-panel">
@@ -385,40 +433,81 @@ export default function DashboardPage() {
   );
 }
 
-function OrganizationForm({ accessToken, onComplete, onError }: FormProps) {
+function ResourceFormDialog({
+  children,
+  onClose,
+}: {
+  children: ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="share-dialog-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        aria-labelledby="resource-dialog-title"
+        aria-modal="true"
+        className="share-dialog resource-form-dialog"
+        role="dialog"
+      >
+        {children}
+      </section>
+    </div>
+  );
+}
+
+function OrganizationForm({ accessToken, onComplete, onCancel }: FormProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<WorkspaceVisibility>("private");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!accessToken)
-      return onError("Your session has expired. Please sign in again.");
+    setError("");
+    if (!accessToken) {
+      setError("Your session has expired. Please sign in again.");
+      return;
+    }
     setSubmitting(true);
     try {
       const response = await createOrganization(
         { name, description, visibility },
         accessToken,
       );
-      if (!response.success) return onError(response.message);
+      if (!response.success) {
+        setError(response.message);
+        return;
+      }
       await onComplete(
         response.message || "Organization created successfully.",
       );
     } catch {
-      onError("The organization could not be created.");
+      setError("The organization could not be created.");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <form className="dashboard-panel inline-form" onSubmit={submit}>
-      <div className="panel-heading">
+    <form className="resource-dialog-form share-form" onSubmit={submit}>
+      <div className="share-dialog-heading">
         <div>
-          <p className="section-kicker">Create organization</p>
-          <h2>Set a new boundary</h2>
+          <p className="section-kicker">Workspace setup</p>
+          <h2 id="resource-dialog-title">Create organization</h2>
         </div>
+        <button
+          aria-label="Close organization form"
+          className="share-dialog-close"
+          onClick={onCancel}
+          type="button"
+        >
+          ×
+        </button>
       </div>
       <div className="inline-form-fields">
         <label>
@@ -454,6 +543,7 @@ function OrganizationForm({ accessToken, onComplete, onError }: FormProps) {
           </select>
         </label>
       </div>
+      {error ? <p className="workspace-error" role="alert">{error}</p> : null}
       <button
         className="button button-accent workspace-submit"
         disabled={submitting}
@@ -469,14 +559,14 @@ function OrganizationForm({ accessToken, onComplete, onError }: FormProps) {
 function ProjectForm({
   accessToken,
   organizationId,
+  organizationName,
   onComplete,
-  onError,
   onCancel,
   project,
 }: FormProps & {
   organizationId?: string;
+  organizationName?: string;
   project?: Project;
-  onCancel?: () => void;
 }) {
   const [name, setName] = useState(project?.name ?? "");
   const [description, setDescription] = useState(project?.description ?? "");
@@ -484,11 +574,15 @@ function ProjectForm({
     project?.visibility ?? "private",
   );
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!accessToken)
-      return onError("Your session has expired. Please sign in again.");
+    setError("");
+    if (!accessToken) {
+      setError("Your session has expired. Please sign in again.");
+      return;
+    }
     setSubmitting(true);
     try {
       const response = project
@@ -506,26 +600,50 @@ function ProjectForm({
             },
             accessToken,
           );
-      if (!response.success) return onError(response.message);
+      if (!response.success) {
+        setError(response.message);
+        return;
+      }
       await onComplete(
         response.message ||
           (project ? "Project updated successfully." : "Project created successfully."),
       );
     } catch {
-      onError(project ? "The project could not be updated." : "The project could not be created.");
+      setError(
+        project
+          ? "The project could not be updated."
+          : "The project could not be created.",
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <form className="dashboard-panel inline-form" onSubmit={submit}>
-      <div className="panel-heading">
+    <form className="resource-dialog-form share-form" onSubmit={submit}>
+      <div className="share-dialog-heading">
         <div>
-          <p className="section-kicker">{project ? "Edit project" : "Create project"}</p>
-          <h2>{project ? "Update project details" : "Add to the active organization"}</h2>
+          <p className="section-kicker">
+            {project ? "Project settings" : "Workspace setup"}
+          </p>
+          <h2 id="resource-dialog-title">
+            {project ? "Edit project" : "Create project"}
+          </h2>
         </div>
+        <button
+          aria-label={project ? "Close project editor" : "Close project form"}
+          className="share-dialog-close"
+          onClick={onCancel}
+          type="button"
+        >
+          ×
+        </button>
       </div>
+      {!project ? (
+        <p className="resource-dialog-context">
+          Adding to <strong>{organizationName}</strong>
+        </p>
+      ) : null}
       <div className="inline-form-fields">
         <label>
           Name
@@ -560,6 +678,7 @@ function ProjectForm({
           </select>
         </label>
       </div>
+      {error ? <p className="workspace-error" role="alert">{error}</p> : null}
       <button
         className="button button-accent workspace-submit"
         disabled={submitting}
@@ -568,15 +687,6 @@ function ProjectForm({
         {submitting ? "Saving..." : project ? "Save changes" : "Create project"}
         <span>↗</span>
       </button>
-      {onCancel ? (
-        <button
-          className="panel-action"
-          onClick={onCancel}
-          type="button"
-        >
-          Cancel
-        </button>
-      ) : null}
     </form>
   );
 }

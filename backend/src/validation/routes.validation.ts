@@ -220,7 +220,7 @@ export const createSecretValidationObject = z
     projectId: objectIdValidator,
     key: z.string().trim().min(1, "Secret key is required"),
     description: descriptionValidator,
-    encryptedValue: z.string().min(1, "Encrypted secret value is required"),
+    encryptedValue: z.string("Secret value must be a string"),
     environment: z
       .string()
       .trim()
