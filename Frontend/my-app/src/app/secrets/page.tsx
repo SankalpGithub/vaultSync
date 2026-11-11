@@ -29,6 +29,9 @@ import {
   type SecretEnvironment,
 } from "@/lib/workspace";
 
+const selectedEnvironmentStorageKey = (projectId: string) =>
+  `vaultsync:selected-environment:${projectId}`;
+
 export default function SecretsPage() {
   return (
     <Suspense fallback={<p className="workspace-empty">Loading project...</p>}>
@@ -44,7 +47,7 @@ function SecretsPageContent() {
   const projectName = searchParams.get("projectName") ?? "Project";
   const [environments, setEnvironments] = useState<ProjectEnvironment[]>([]);
   const [secrets, setSecrets] = useState<Secret[]>([]);
-  const [selectedEnvironment, setSelectedEnvironment] = useState("all");
+  const [selectedEnvironment, setSelectedEnvironment] = useState("");
   const [showEnvironmentManager, setShowEnvironmentManager] = useState(false);
   const [newEnvironmentName, setNewEnvironmentName] = useState("");
   const [editingEnvironmentId, setEditingEnvironmentId] = useState("");
@@ -109,15 +112,42 @@ function SecretsPageContent() {
         }
 
         const projectEnvironments = project.environments ?? [];
+        let savedEnvironment = "";
+        try {
+          savedEnvironment =
+            window.localStorage.getItem(
+              selectedEnvironmentStorageKey(projectId),
+            ) ?? "";
+        } catch {
+          setError("Your browser could not restore the previous environment.");
+        }
+        const nextSelectedEnvironment =
+          savedEnvironment === "all" ||
+          projectEnvironments.some((item) => item.name === savedEnvironment)
+            ? savedEnvironment
+            : projectEnvironments.find((item) => item.name === "development")
+                ?.name ??
+              projectEnvironments[0]?.name ??
+              "";
+        try {
+          if (nextSelectedEnvironment) {
+            window.localStorage.setItem(
+              selectedEnvironmentStorageKey(projectId),
+              nextSelectedEnvironment,
+            );
+          } else {
+            window.localStorage.removeItem(
+              selectedEnvironmentStorageKey(projectId),
+            );
+          }
+        } catch {
+          setError("Your browser could not save the selected environment.");
+        }
         setProjectOrgId(project.orgId);
         setEnvironments(projectEnvironments);
         setSecrets(secretResponse.data ?? []);
-        setEnvironment((current) =>
-          projectEnvironments.some((item) => item.name === current)
-            ? current
-            : projectEnvironments.find((item) => item.name === "development")
-                ?.name ?? projectEnvironments[0]?.name ?? "",
-        );
+        setSelectedEnvironment(nextSelectedEnvironment);
+        setEnvironment(nextSelectedEnvironment);
       })
       .catch(() => {
         if (!cancelled) {
@@ -134,6 +164,20 @@ function SecretsPageContent() {
       cancelled = true;
     };
   }, [accessToken, projectId]);
+
+  function handleEnvironmentSelection(nextEnvironment: string) {
+    setSelectedEnvironment(nextEnvironment);
+    if (!projectId || !nextEnvironment) return;
+
+    try {
+      window.localStorage.setItem(
+        selectedEnvironmentStorageKey(projectId),
+        nextEnvironment,
+      );
+    } catch {
+      setError("Your browser could not save the selected environment.");
+    }
+  }
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -345,7 +389,7 @@ function SecretsPageContent() {
       const createdEnvironment = response.data;
       setEnvironments((current) => [...current, createdEnvironment]);
       setEnvironment(createdEnvironment.name);
-      setSelectedEnvironment(createdEnvironment.name);
+      handleEnvironmentSelection(createdEnvironment.name);
       setNewEnvironmentName("");
       setEnvironmentManagerStatus(
         `Environment "${createdEnvironment.name}" added successfully.`,
@@ -400,9 +444,9 @@ function SecretsPageContent() {
       setEnvironment((current) =>
         current === item.name ? renamed.name : current,
       );
-      setSelectedEnvironment((current) =>
-        current === item.name ? renamed.name : current,
-      );
+      if (selectedEnvironment === item.name) {
+        handleEnvironmentSelection(renamed.name);
+      }
       setEnvironmentManagerStatus(
         `Environment renamed to "${renamed.name}".`,
       );
@@ -451,7 +495,13 @@ function SecretsPageContent() {
         );
       }
       if (selectedEnvironment === item.name) {
-        setSelectedEnvironment("all");
+        const nextEnvironment =
+          remainingEnvironments.find(
+            (environmentItem) => environmentItem.name === "development",
+          )?.name ??
+          remainingEnvironments[0]?.name ??
+          "";
+        handleEnvironmentSelection(nextEnvironment);
       }
       setEnvironmentManagerStatus(
         `Environment "${item.name}" deleted successfully.`,
@@ -659,8 +709,9 @@ function SecretsPageContent() {
                   className="auth-input"
                   id="secret-environment"
                   value={selectedEnvironment}
+                  disabled={loading || environments.length === 0}
                   onChange={(event) =>
-                    setSelectedEnvironment(event.target.value)
+                    handleEnvironmentSelection(event.target.value)
                   }
                 >
                   <option value="all">All environments</option>
