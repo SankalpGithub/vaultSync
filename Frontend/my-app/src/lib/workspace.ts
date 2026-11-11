@@ -148,6 +148,17 @@ export function createProject(
   });
 }
 
+export function updateProject(
+  projectId: string,
+  payload: Omit<CreateProjectPayload, "orgId">,
+  accessToken: string,
+) {
+  return request<Project>(`/project/${encodeURIComponent(projectId)}`, accessToken, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function listOrganizations(accessToken: string) {
   return request<Organization[]>("/org", accessToken);
 }

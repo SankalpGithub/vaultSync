@@ -1,10 +1,10 @@
-import { SendShareInvitation } from "../models/sendShareInvitation.model.js";
-import type { ICreateSendShareInvitation } from "../types/models/IsendShareInvitation.js";
+import { shareInvitations } from "../models/shareInvitation.model.js";
+import type { ICreateShareInvitations } from "../types/models/IshareInvitation.js";
 
 const createSendShareInvitation = async (
-  payload: ICreateSendShareInvitation,
+  payload: ICreateShareInvitations,
 ) => {
-  return await SendShareInvitation.create(payload);
+  return await shareInvitations.create(payload);
 };
 
 export const SendShareInvitationRepository = {

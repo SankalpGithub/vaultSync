@@ -1,26 +1,31 @@
 import type { Types } from "mongoose";
 
-export interface ISendShareEnvironment {
+export interface IShareEnvironment {
   envId: Types.ObjectId;
   permissions: string[];
 }
 
-export interface ISendShareInvitation {
+export interface IShareInvitations {
   _id: Types.ObjectId;
   sharerId: Types.ObjectId;
-  recipientEmails: string[];
+  recipientId: Types.ObjectId;
+  recipientEmail: string;
+  tokenHash?: string | null;
   orgId: Types.ObjectId;
   orgPermissions: string[];
   projectId: Types.ObjectId[];
   projectPermissions: string[];
-  environment: ISendShareEnvironment[];
+  environment: IShareEnvironment[];
   secretId: Types.ObjectId[];
   secretPermission: string[];
   role: string;
-  recipientId?: Types.ObjectId | null;
-  recipientEmail?: string | null;
-  tokenHash?: string | null;
-  status?: "pending" | "accepted" | "rejected" | "revoked" | "expired" | "cancelled";
+  status?:
+    | "pending"
+    | "accepted"
+    | "rejected"
+    | "revoked"
+    | "expired"
+    | "cancelled";
   respondedAt?: Date | null;
   revokedAt?: Date | null;
   message?: string;
@@ -29,21 +34,19 @@ export interface ISendShareInvitation {
   updatedAt: Date;
 }
 
-export interface ICreateSendShareInvitation {
+export interface ICreateShareInvitations {
   sharerId: Types.ObjectId;
-  recipientEmails: string[];
+  recipientId: Types.ObjectId;
+  recipientEmail: string;
+  tokenHash: string;
   orgId: Types.ObjectId;
   orgPermissions: string[];
   projectId: Types.ObjectId[];
   projectPermissions: string[];
-  environment: ISendShareEnvironment[];
+  environment: IShareEnvironment[];
   secretId: Types.ObjectId[];
   secretPermission: string[];
   role: string;
-  recipientId?: Types.ObjectId | null;
-  recipientEmail?: string | null;
-  tokenHash?: string | null;
-  status?: "pending" | "accepted" | "rejected" | "revoked" | "expired" | "cancelled";
   message?: string;
   expiresAt?: Date | null;
 }

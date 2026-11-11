@@ -100,6 +100,60 @@ export const handleDeleteProjectByOwner = async (
   return res;
 };
 
+export const handleUpdateProjectByOwner = async (
+  projectId: string,
+  ownerId: string,
+  updates: {
+    name: string;
+    description?: string;
+    visibility: "private" | "internal";
+  },
+) => {
+  const project = await ProjectRepository.getProjectById(projectId);
+  if (!project || project.ownerId.toString() !== ownerId || project.isDeleted) {
+    return {
+      success: false,
+      message: "Project not found",
+      data: null,
+      statusCode: 404,
+    } satisfies ResponseData;
+  }
+
+  const isNameTaken = await ProjectRepository.isProjectNameTakenByUser(
+    updates.name,
+    ownerId,
+    project.orgId.toString(),
+    projectId,
+  );
+  if (isNameTaken) {
+    return {
+      success: false,
+      message: "Project name already exists in this organization",
+      data: null,
+      statusCode: 400,
+    } satisfies ResponseData;
+  }
+
+  const updatedProject = await ProjectRepository.updateProjectByOwner(
+    projectId,
+    ownerId,
+    updates,
+  );
+  return updatedProject
+    ? {
+        success: true,
+        message: "Project updated successfully",
+        data: updatedProject,
+        statusCode: 200,
+      }
+    : {
+        success: false,
+        message: "Project not found",
+        data: null,
+        statusCode: 404,
+      };
+};
+
 export const handleDeleteProject = async (projectId: string) => {
   const project = await ProjectRepository.getProjectById(projectId);
 

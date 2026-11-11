@@ -2,7 +2,7 @@ import { model, Schema, Types } from "mongoose";
 
 const accessGrantSchema = new Schema(
   {
-    invitationId: { type: Types.ObjectId, ref: "SendShareInvitations", required: true },
+    invitationId: { type: Types.ObjectId, ref: "ShareInvitations", required: true },
     userId: { type: Types.ObjectId, ref: "User", required: true },
     grantedBy: { type: Types.ObjectId, ref: "User", required: true },
     resourceType: {

@@ -6,11 +6,15 @@ const isProjectNameTakenByUser = async (
   name: string,
   ownerId: string,
   orgId: string,
+  excludeProjectId?: string,
 ) => {
   return await Project.findOne({
     name,
     ownerId: new Types.ObjectId(ownerId),
     orgId: new Types.ObjectId(orgId),
+    ...(excludeProjectId && {
+      _id: { $ne: new Types.ObjectId(excludeProjectId) },
+    }),
   });
 };
 
@@ -39,6 +43,27 @@ const deleteProjectByOwner = async (projectId: string, ownerId: string) => {
       lastModifiedBy: new Types.ObjectId(ownerId),
     },
     { new: true },
+  );
+};
+
+const updateProjectByOwner = async (
+  projectId: string,
+  ownerId: string,
+  updates: { name: string; description?: string; visibility: "private" | "internal" },
+) => {
+  return await Project.findOneAndUpdate(
+    {
+      _id: new Types.ObjectId(projectId),
+      ownerId: new Types.ObjectId(ownerId),
+      isDeleted: false,
+    },
+    {
+      $set: {
+        ...updates,
+        lastModifiedBy: new Types.ObjectId(ownerId),
+      },
+    },
+    { new: true, runValidators: true },
   );
 };
 
@@ -243,6 +268,7 @@ export const ProjectRepository = {
   getProjectById,
   deleteProject,
   deleteProjectByOwner,
+  updateProjectByOwner,
   getProjectsByOrg,
   getProjectsByOwner,
   createProjectEnvironment,

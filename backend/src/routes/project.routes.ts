@@ -7,11 +7,13 @@ import {
   deleteProject,
   listProjects,
   renameProjectEnvironment,
+  updateProject,
 } from "../controllers/project.controller.js";
 import { validateReq } from "../middlewares/reqValidator.middleware.js";
 import {
   createProjectEnvironmentValidationSchema,
   createProjectValidationSchema,
+  updateProjectValidationSchema,
   deleteProjectEnvironmentValidationSchema,
   renameProjectEnvironmentValidationSchema,
 } from "../validation/routes.validation.js";
@@ -30,6 +32,12 @@ router.post(
   "/create",
   validateReq(createProjectValidationSchema),
   asyncHandler(createProject),
+);
+
+router.patch(
+  "/:projectId",
+  validateReq(updateProjectValidationSchema),
+  asyncHandler(updateProject),
 );
 
 // POST /:projectId/environments

@@ -107,9 +107,16 @@ export const handleGetSecretValue = async (
   if (userId) {
     const project = await ProjectRepository.getProjectById(secret.projectId.toString());
     const isOwner = project?.ownerId.toString() === userId;
-    const secretGrant = await hasActiveGrant(userId, "secret", secretId, ["secret:value:read"]);
-    const environmentGrant = await hasActiveGrant(userId, "environment", secret.environment, ["secret:value:read"]);
-    const projectGrant = await hasActiveGrant(userId, "project", secret.projectId.toString(), ["secret:value:read"]);
+    const environmentId = project?.environments
+      .find((environment) => environment.name === secret.environment)
+      ?._id?.toString();
+    const [secretGrant, environmentGrant, projectGrant] = await Promise.all([
+      hasActiveGrant(userId, "secret", secretId, ["secret:value:read"]),
+      environmentId
+        ? hasActiveGrant(userId, "environment", environmentId, ["secret:value:read"])
+        : Promise.resolve(false),
+      hasActiveGrant(userId, "project", secret.projectId.toString(), ["secret:value:read"]),
+    ]);
     if (!isOwner && !secretGrant && !environmentGrant && !projectGrant) {
       return { success: false, message: "You do not have permission to reveal this secret", data: null, statusCode: 403 };
     }

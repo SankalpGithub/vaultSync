@@ -267,6 +267,24 @@ Adds a custom environment to the project.
 
 **Errors:** `400` for invalid input; `404` when the project does not exist or is not owned by the authenticated user; `409` if the project already has an environment with that name, ignoring case.
 
+### PATCH `/project/:projectId`
+
+**Authentication:** Requires a valid access token. The authenticated user must own the project.
+
+Updates the project's name, description, and visibility. `projectId` must be a
+MongoDB ObjectId; the strict request body requires `name` and `visibility`, and
+accepts an optional `description` up to 500 characters.
+
+```json
+{
+  "name": "payments-api",
+  "description": "Core payments service",
+  "visibility": "private"
+}
+```
+
+**Errors:** `400` for invalid input or a duplicate project name in the organization; `404` if the project is not found or is not owned by the authenticated user.
+
 Secrets can only be assigned to environments configured on their project. If a
 secret request omits `environment`, it defaults to `development`.
 

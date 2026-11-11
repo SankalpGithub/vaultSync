@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WorkspaceShell } from "@/components/WorkspaceShell";
 import { useAuth } from "@/context/AuthContext";
+import { ShareDialog } from "@/components/ShareDialog";
 import {
   createOrganization,
   createProject,
@@ -11,6 +12,7 @@ import {
   deleteProject,
   listOrganizations,
   listProjects,
+  updateProject,
   type Organization,
   type Project,
   type WorkspaceVisibility,
@@ -35,6 +37,9 @@ export default function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [openProjectMenuId, setOpenProjectMenuId] = useState("");
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [sharingProject, setSharingProject] = useState<Project | null>(null);
 
   const selectedOrganization = organizations.find(
     (organization) => organization._id === selectedOrganizationId,
@@ -137,6 +142,7 @@ export default function DashboardPage() {
   const complete = async (message: string) => {
     setStatus(message);
     setPanel(null);
+    setEditingProject(null);
     await loadWorkspace(false);
   };
 
@@ -230,10 +236,21 @@ export default function DashboardPage() {
       ) : null}
       {panel === "project" ? (
         <ProjectForm
+          key="create-project"
           accessToken={accessToken}
           organizationId={selectedOrganizationId}
           onComplete={complete}
           onError={setError}
+        />
+      ) : null}
+      {editingProject ? (
+        <ProjectForm
+          key={editingProject._id}
+          accessToken={accessToken}
+          onComplete={complete}
+          onError={setError}
+          onCancel={() => setEditingProject(null)}
+          project={editingProject}
         />
       ) : null}
 
@@ -288,17 +305,61 @@ export default function DashboardPage() {
                   {project.visibility}
                   <b>{project.status}</b>
                 </span>
-                <button
-                  aria-label={`Delete ${project.name}`}
-                  className="row-delete"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    void handleDeleteProject(project);
-                  }}
-                  type="button"
+                <div
+                  className="resource-menu-wrap"
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
                 >
-                  ×
-                </button>
+                  <button
+                    aria-expanded={openProjectMenuId === project._id}
+                    aria-label={`Actions for ${project.name}`}
+                    className="resource-menu-trigger"
+                    onClick={() =>
+                      setOpenProjectMenuId((current) =>
+                        current === project._id ? "" : project._id,
+                      )
+                    }
+                    type="button"
+                  >
+                    <span aria-hidden="true">•••</span>
+                  </button>
+                  {openProjectMenuId === project._id ? (
+                    <div className="resource-menu" role="menu">
+                      <button
+                        onClick={() => {
+                          setOpenProjectMenuId("");
+                          setSharingProject(project);
+                        }}
+                        role="menuitem"
+                        type="button"
+                      >
+                        Share
+                      </button>
+                      <button
+                        onClick={() => {
+                          setOpenProjectMenuId("");
+                          setPanel(null);
+                          setEditingProject(project);
+                        }}
+                        role="menuitem"
+                        type="button"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="danger-action"
+                        onClick={() => {
+                          setOpenProjectMenuId("");
+                          void handleDeleteProject(project);
+                        }}
+                        role="menuitem"
+                        type="button"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             ))}
           </div>
@@ -311,6 +372,15 @@ export default function DashboardPage() {
           <b>{organizations.length} total</b>
         </span>
       </div>
+      {sharingProject && accessToken ? (
+        <ShareDialog
+          accessToken={accessToken}
+          initialOrganizationId={sharingProject.orgId}
+          initialProjectId={sharingProject._id}
+          initialScope="project"
+          onClose={() => setSharingProject(null)}
+        />
+      ) : null}
     </WorkspaceShell>
   );
 }
@@ -401,10 +471,18 @@ function ProjectForm({
   organizationId,
   onComplete,
   onError,
-}: FormProps & { organizationId: string }) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [visibility, setVisibility] = useState<WorkspaceVisibility>("private");
+  onCancel,
+  project,
+}: FormProps & {
+  organizationId?: string;
+  project?: Project;
+  onCancel?: () => void;
+}) {
+  const [name, setName] = useState(project?.name ?? "");
+  const [description, setDescription] = useState(project?.description ?? "");
+  const [visibility, setVisibility] = useState<WorkspaceVisibility>(
+    project?.visibility ?? "private",
+  );
   const [submitting, setSubmitting] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -413,14 +491,28 @@ function ProjectForm({
       return onError("Your session has expired. Please sign in again.");
     setSubmitting(true);
     try {
-      const response = await createProject(
-        { name, description, orgId: organizationId, visibility },
-        accessToken,
-      );
+      const response = project
+        ? await updateProject(
+            project._id,
+            { name, description, visibility },
+            accessToken,
+          )
+        : await createProject(
+            {
+              name,
+              description,
+              orgId: organizationId ?? "",
+              visibility,
+            },
+            accessToken,
+          );
       if (!response.success) return onError(response.message);
-      await onComplete(response.message || "Project created successfully.");
+      await onComplete(
+        response.message ||
+          (project ? "Project updated successfully." : "Project created successfully."),
+      );
     } catch {
-      onError("The project could not be created.");
+      onError(project ? "The project could not be updated." : "The project could not be created.");
     } finally {
       setSubmitting(false);
     }
@@ -430,8 +522,8 @@ function ProjectForm({
     <form className="dashboard-panel inline-form" onSubmit={submit}>
       <div className="panel-heading">
         <div>
-          <p className="section-kicker">Create project</p>
-          <h2>Add to the active organization</h2>
+          <p className="section-kicker">{project ? "Edit project" : "Create project"}</p>
+          <h2>{project ? "Update project details" : "Add to the active organization"}</h2>
         </div>
       </div>
       <div className="inline-form-fields">
@@ -473,9 +565,18 @@ function ProjectForm({
         disabled={submitting}
         type="submit"
       >
-        {submitting ? "Creating..." : "Create project"}
+        {submitting ? "Saving..." : project ? "Save changes" : "Create project"}
         <span>↗</span>
       </button>
+      {onCancel ? (
+        <button
+          className="panel-action"
+          onClick={onCancel}
+          type="button"
+        >
+          Cancel
+        </button>
+      ) : null}
     </form>
   );
 }

@@ -2,6 +2,7 @@ import {
   handleCreateProject,
   handleDeleteProjectByOwner,
   handleListProjects,
+  handleUpdateProjectByOwner,
 } from "../services/projects/createProject.service.js";
 import type { ResponseData, AuthRequest } from "../types/reqRes.js";
 import type { Response } from "express";
@@ -67,6 +68,25 @@ export const deleteProject = async (req: AuthRequest, res: Response) => {
   const result: ResponseData = await handleDeleteProjectByOwner(
     projectId,
     userId,
+  );
+  sendResponse(res, result);
+};
+
+export const updateProject = async (req: AuthRequest, res: Response) => {
+  const projectId = req.params.projectId as string | string[];
+  const userId = req.userId;
+  if (!userId) {
+    throw new AppError("User not authenticated", 401);
+  }
+  if (!projectId || Array.isArray(projectId)) {
+    throw new AppError("Valid Project ID is required", 400);
+  }
+
+  const { name, description, visibility } = req.body;
+  const result: ResponseData = await handleUpdateProjectByOwner(
+    projectId,
+    userId,
+    { name, description, visibility },
   );
   sendResponse(res, result);
 };

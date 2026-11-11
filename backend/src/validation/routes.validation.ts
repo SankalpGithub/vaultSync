@@ -157,6 +157,21 @@ export const createProjectValidationSchema = createRequestSchema({
   body: createProjectValidationObject,
 });
 
+export const updateProjectValidationSchema = createRequestSchema({
+  params: z
+    .object({
+      projectId: objectIdValidator,
+    })
+    .strict(),
+  body: z
+    .object({
+      name: nameValidator,
+      description: descriptionValidator,
+      visibility: z.enum(["private", "internal"]),
+    })
+    .strict(),
+});
+
 export const createProjectEnvironmentValidationSchema = createRequestSchema({
   params: z
     .object({
@@ -247,22 +262,9 @@ export const sendShareInvitationValidationSchema = createRequestSchema({
         .array(z.string().trim().email("Invalid recipient email"))
         .min(1, "At least one recipient email is required"),
       orgId: objectIdValidator,
-      orgPermissions: z.array(z.string()).default([]),
       projectId: z.array(objectIdValidator).default([]),
-      projectPermissions: z.array(z.string()).default([]),
-      environment: z
-        .array(
-          z.object({
-            envId: objectIdValidator,
-            permissions: z.array(z.string()).default([]),
-          }),
-        )
-        .default([]),
       secretId: z.array(objectIdValidator).default([]),
-      secretPermission: z.array(z.string()).default([]),
       role: z.string().trim().min(1, "Role is required"),
-      message: z.string().trim().max(500).optional(),
-      expiresAt: z.string().datetime().optional(),
     })
     .strict(),
 });

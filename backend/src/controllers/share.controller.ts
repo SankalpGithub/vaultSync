@@ -3,7 +3,7 @@ import type { AuthRequest } from "../types/reqRes.js";
 import { AppError } from "../utils/appError.js";
 import { sendResponse } from "../utils/responseHandler.js";
 import {
-  sendShareInvitation,
+  handleShareInvitation,
   type ISendShareInvitationRequest,
 } from "../services/sharing/share.service.js";
 import {
@@ -17,6 +17,7 @@ import {
   updateShareGrant,
 } from "../services/sharing/share.service.js";
 
+//send invitation controller
 export const createShareInvitation = async (
   req: AuthRequest,
   res: Response,
@@ -30,47 +31,98 @@ export const createShareInvitation = async (
     sharerId: req.userId,
   };
 
-  const result = await sendShareInvitation(request);
+  const result = await handleShareInvitation(request);
   sendResponse(res, result);
 };
 
-export const getReceivedShareInvitations = async (req: AuthRequest, res: Response) => {
+export const getReceivedShareInvitations = async (
+  req: AuthRequest,
+  res: Response,
+) => {
   if (!req.userId) throw new AppError("User not authenticated", 401);
-  sendResponse(res, await getReceivedInvitations(req.userId, req.query.status as string | undefined));
+  sendResponse(
+    res,
+    await getReceivedInvitations(
+      req.userId,
+      req.query.status as string | undefined,
+    ),
+  );
 };
 
-export const getSentShareInvitations = async (req: AuthRequest, res: Response) => {
+export const getSentShareInvitations = async (
+  req: AuthRequest,
+  res: Response,
+) => {
   if (!req.userId) throw new AppError("User not authenticated", 401);
-  sendResponse(res, await getSentInvitations(req.userId, req.query.status as string | undefined));
+  sendResponse(
+    res,
+    await getSentInvitations(
+      req.userId,
+      req.query.status as string | undefined,
+    ),
+  );
 };
 
 export const acceptShare = async (req: AuthRequest, res: Response) => {
   if (!req.userId) throw new AppError("User not authenticated", 401);
-  const token = typeof req.query.token === "string" ? req.query.token : undefined;
-  sendResponse(res, await acceptShareInvitation(req.params.invitationId as string, req.userId, token));
+  const token =
+    typeof req.query.token === "string" ? req.query.token : undefined;
+  sendResponse(
+    res,
+    await acceptShareInvitation(
+      req.params.invitationId as string,
+      req.userId,
+      token,
+    ),
+  );
 };
 
 export const rejectShare = async (req: AuthRequest, res: Response) => {
   if (!req.userId) throw new AppError("User not authenticated", 401);
-  sendResponse(res, await rejectShareInvitation(req.params.invitationId as string, req.userId));
+  sendResponse(
+    res,
+    await rejectShareInvitation(req.params.invitationId as string, req.userId),
+  );
 };
 
 export const cancelShare = async (req: AuthRequest, res: Response) => {
   if (!req.userId) throw new AppError("User not authenticated", 401);
-  sendResponse(res, await cancelShareInvitation(req.params.invitationId as string, req.userId));
+  sendResponse(
+    res,
+    await cancelShareInvitation(req.params.invitationId as string, req.userId),
+  );
 };
 
 export const getShareGrants = async (req: AuthRequest, res: Response) => {
   if (!req.userId) throw new AppError("User not authenticated", 401);
-  sendResponse(res, await listGrants(req.userId, req.query.resourceType as string | undefined, req.query.resourceId as string | undefined));
+  sendResponse(
+    res,
+    await listGrants(
+      req.userId,
+      req.query.resourceType as string | undefined,
+      req.query.resourceId as string | undefined,
+    ),
+  );
 };
 
-export const updateShareGrantPermissions = async (req: AuthRequest, res: Response) => {
+export const updateShareGrantPermissions = async (
+  req: AuthRequest,
+  res: Response,
+) => {
   if (!req.userId) throw new AppError("User not authenticated", 401);
-  sendResponse(res, await updateShareGrant(req.params.grantId as string, req.userId, req.body));
+  sendResponse(
+    res,
+    await updateShareGrant(req.params.grantId as string, req.userId, req.body),
+  );
 };
 
-export const revokeShareGrantAccess = async (req: AuthRequest, res: Response) => {
+export const revokeShareGrantAccess = async (
+  req: AuthRequest,
+  res: Response,
+) => {
   if (!req.userId) throw new AppError("User not authenticated", 401);
-  sendResponse(res, await revokeShareGrant(req.params.grantId as string, req.userId));
+  sendResponse(
+    res,
+    await revokeShareGrant(req.params.grantId as string, req.userId),
+  );
 };

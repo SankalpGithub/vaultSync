@@ -33,7 +33,6 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           <Link href="/organization"><span>⌂</span>Organizations</Link>
           <Link href="/project"><span>◇</span>Projects</Link>
           <Link href="/secrets"><span>◆</span>Secrets</Link>
-          <Link href="/share"><span>↗</span>Sharing</Link>
         </nav>
         <div className="sidebar-bottom">
           <span className="sidebar-status">

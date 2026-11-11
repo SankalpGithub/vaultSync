@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { WorkspaceShell } from "@/components/WorkspaceShell";
+import { ShareDialog } from "@/components/ShareDialog";
 import { useAuth } from "@/context/AuthContext";
 import {
   createProjectEnvironment,
@@ -56,6 +57,9 @@ function SecretsPageContent() {
   const [description, setDescription] = useState("");
   const [environment, setEnvironment] =
     useState<SecretEnvironment>("development");
+  const [projectOrgId, setProjectOrgId] = useState("");
+  const [openSecretMenuId, setOpenSecretMenuId] = useState("");
+  const [sharingSecret, setSharingSecret] = useState<Secret | null>(null);
 
   useEffect(() => {
     if (!accessToken || !projectId) {
@@ -87,6 +91,7 @@ function SecretsPageContent() {
         }
 
         const projectEnvironments = project.environments ?? [];
+        setProjectOrgId(project.orgId);
         setEnvironments(projectEnvironments);
         setSecrets(secretResponse.data ?? []);
         setEnvironment((current) =>
@@ -619,29 +624,61 @@ function SecretsPageContent() {
                               ? "◉"
                               : "◌"}
                         </button>
-                        <div className="managed-secret-actions">
+                        <div className="resource-menu-wrap">
                           <button
-                            className="panel-action"
-                            aria-label={`Edit ${secret.key}`}
+                            aria-expanded={openSecretMenuId === secret._id}
+                            aria-label={`Actions for ${secret.key}`}
+                            className="resource-menu-trigger"
                             onClick={() =>
-                              editingSecretId === secret._id
-                                ? setEditingSecretId("")
-                                : handleStartEdit(secret)
+                              setOpenSecretMenuId((current) =>
+                                current === secret._id ? "" : secret._id,
+                              )
                             }
                             type="button"
                           >
-                            {editingSecretId === secret._id
-                              ? "Cancel"
-                              : "Edit"}
+                            <span aria-hidden="true">•••</span>
                           </button>
-                          <button
-                            className="row-delete"
-                            aria-label={`Delete ${secret.key}`}
-                            onClick={() => void handleDelete(secret)}
-                            type="button"
-                          >
-                            ×
-                          </button>
+                          {openSecretMenuId === secret._id ? (
+                            <div className="resource-menu" role="menu">
+                              <button
+                                onClick={() => {
+                                  setOpenSecretMenuId("");
+                                  setSharingSecret(secret);
+                                }}
+                                role="menuitem"
+                                type="button"
+                              >
+                                Share
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setOpenSecretMenuId("");
+                                  if (editingSecretId === secret._id) {
+                                    setEditingSecretId("");
+                                  } else {
+                                    handleStartEdit(secret);
+                                  }
+                                }}
+                                role="menuitem"
+                                type="button"
+                              >
+                                {editingSecretId === secret._id
+                                  ? "Cancel edit"
+                                  : "Edit"}
+                              </button>
+                              <button
+                                className="danger-action"
+                                onClick={() => {
+                                  setOpenSecretMenuId("");
+                                  void handleDelete(secret);
+                                }}
+                                role="menuitem"
+                                type="button"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                       {editingSecretId === secret._id ? (
@@ -692,6 +729,16 @@ function SecretsPageContent() {
           </section>
         </>
       )}
+      {sharingSecret && accessToken && projectOrgId ? (
+        <ShareDialog
+          accessToken={accessToken}
+          initialOrganizationId={projectOrgId}
+          initialProjectId={projectId}
+          initialScope="secret"
+          initialSecretId={sharingSecret._id}
+          onClose={() => setSharingSecret(null)}
+        />
+      ) : null}
     </WorkspaceShell>
   );
 }

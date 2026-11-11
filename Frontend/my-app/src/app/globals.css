@@ -2382,3 +2382,198 @@ code {
     display: none;
   }
 }
+
+.resource-menu-wrap {
+  position: relative;
+}
+.resource-menu-trigger {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 15px;
+  height: 34px;
+  justify-content: center;
+  letter-spacing: 1px;
+  width: 34px;
+}
+.resource-menu-trigger:hover,
+.resource-menu-trigger[aria-expanded="true"] {
+  background: white;
+  border-color: var(--line);
+  color: var(--ink);
+}
+.resource-menu {
+  background: white;
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 30px #12201b1c;
+  min-width: 145px;
+  padding: 5px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 5px);
+  z-index: 20;
+}
+.resource-menu button {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  cursor: pointer;
+  display: block;
+  font: inherit;
+  font-size: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  width: 100%;
+}
+.resource-menu button:hover,
+.resource-menu button:focus-visible {
+  background: #f0f5ed;
+}
+.resource-menu button.danger-action {
+  color: #b44e3a;
+}
+.share-dialog-backdrop {
+  align-items: center;
+  background: #12201b99;
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 24px;
+  position: fixed;
+  z-index: 100;
+}
+.share-dialog {
+  background: var(--background);
+  box-shadow: 14px 15px 0 #dbe5d5;
+  max-height: min(850px, calc(100vh - 48px));
+  max-width: 790px;
+  overflow-y: auto;
+  padding: 30px;
+  width: 100%;
+}
+.share-dialog-heading {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+}
+.share-dialog-heading .section-kicker {
+  margin-bottom: 12px;
+}
+.share-dialog-heading h2 {
+  font-size: 31px;
+  margin: 0;
+}
+.share-dialog-close {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 24px;
+  height: 36px;
+  line-height: 1;
+  width: 36px;
+}
+.share-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 25px;
+}
+.share-scope-tabs {
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 22px;
+}
+.share-scope-tabs button {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  padding: 10px 2px 12px;
+  text-transform: capitalize;
+}
+.share-scope-tabs button.active {
+  border-bottom-color: var(--orange);
+  color: var(--ink);
+  font-weight: 700;
+}
+.share-organization-select,
+.share-form-footer label {
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  font-weight: 720;
+  gap: 8px;
+}
+.share-organization-select .auth-input,
+.share-form-footer .auth-input {
+  margin: 0;
+}
+.share-resource-list {
+  border: 1px solid var(--line);
+  max-height: 270px;
+  min-height: 90px;
+  overflow-y: auto;
+  padding: 0 15px;
+}
+.share-resource-option {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  min-height: 57px;
+  padding: 10px 2px;
+}
+.share-resource-option:last-child {
+  border-bottom: 0;
+}
+.share-resource-option input {
+  accent-color: var(--orange);
+}
+.share-resource-option strong,
+.share-resource-option small {
+  display: block;
+}
+.share-resource-option strong {
+  font-size: 12px;
+}
+.share-resource-option small {
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 4px;
+}
+.share-form-footer {
+  align-items: end;
+  display: grid;
+  gap: 15px;
+  grid-template-columns: minmax(0, 1fr) 190px auto;
+}
+.share-form-footer .workspace-submit {
+  margin: 0;
+  min-height: 43px;
+  white-space: nowrap;
+}
+.share-form .workspace-error,
+.share-form .workspace-success {
+  margin: 0;
+}
+@media (max-width: 680px) {
+  .share-dialog {
+    padding: 22px 18px;
+  }
+  .share-form-footer {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+  .share-form-footer .workspace-submit {
+    justify-self: start;
+  }
+}
