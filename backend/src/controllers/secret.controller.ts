@@ -36,7 +36,10 @@ export const listSecrets = async (req: AuthRequest, res: Response) => {
     throw new AppError("Project ID is required", 400);
   }
 
-  const result: ResponseData = await handleGetSecrets(projectId, req.userId);
+  const result: ResponseData = await handleGetSecrets(
+    projectId,
+    req.authorizedSecretIds,
+  );
   sendResponse(res, result);
 };
 
@@ -46,7 +49,7 @@ export const getSecretValue = async (req: AuthRequest, res: Response) => {
     throw new AppError("Valid Secret ID is required", 400);
   }
 
-  const result: ResponseData = await handleGetSecretValue(secretId, req.userId);
+  const result: ResponseData = await handleGetSecretValue(secretId);
   sendResponse(res, result);
 };
 

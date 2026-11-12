@@ -17,20 +17,19 @@ const getOrganizationsByOwner = async (ownerId: string) => {
   }).sort({ createdAt: -1 });
 };
 
-const deleteOrganizationByOwner = async (
+const deleteOrganization = async (
   organizationId: string,
-  ownerId: string,
+  actorId: string,
 ) => {
   return await Org.findOneAndUpdate(
     {
       _id: new Types.ObjectId(organizationId),
-      ownerId: new Types.ObjectId(ownerId),
       isDeleted: false,
     },
     {
       isDeleted: true,
       deletedAt: new Date(),
-      lastModifiedBy: new Types.ObjectId(ownerId),
+      lastModifiedBy: new Types.ObjectId(actorId),
     },
     { new: true },
   );
@@ -40,5 +39,5 @@ export const OrgRepository = {
   isOrganizationNameTakenByUser,
   createOrganization,
   getOrganizationsByOwner,
-  deleteOrganizationByOwner,
+  deleteOrganization,
 };

@@ -84,7 +84,11 @@ export function respondToInvitation(
   token?: string,
 ) {
   const query = token ? `?token=${encodeURIComponent(token)}` : "";
-  return request<{ invitationId: string }>(
+  return request<{
+    invitationId: string;
+    projectIds: string[];
+    secretProjectIds?: string[];
+  }>(
     `/invitations/${id}/${action}${query}`,
     accessToken,
     { method: "POST" },

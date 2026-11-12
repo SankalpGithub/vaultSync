@@ -3,7 +3,6 @@ import type { ResponseData } from "../../types/reqRes.js";
 import { SecretRepository } from "../../repository/secret.repository.js";
 import { ProjectRepository } from "../../repository/project.repository.js";
 import { decryptSecret, encryptSecret } from "../../utils/encryption.js";
-import { getActiveResourceIds, hasActiveGrant } from "../sharing/access.service.js";
 
 export const handleCreateSecret = async (
   payload: ICreateSecret,
@@ -61,25 +60,12 @@ export const handleCreateSecret = async (
 
 export const handleGetSecrets = async (
   projectId: string,
-  userId?: string,
+  authorizedSecretIds?: readonly string[],
 ): Promise<ResponseData> => {
   let secrets = await SecretRepository.getSecretsByProject(projectId);
-  if (userId) {
-    const project = await ProjectRepository.getProjectById(projectId);
-    const isOwner = project?.ownerId.toString() === userId;
-    if (!isOwner) {
-      const sharedProjects = await getActiveResourceIds(userId, "project");
-      const sharedSecrets = await getActiveResourceIds(userId, "secret");
-      if (!sharedProjects.includes(projectId)) {
-        secrets = secrets.filter((secret) => sharedSecrets.includes(secret._id.toString()));
-      }
-      if (sharedSecrets.length) {
-        secrets = secrets.filter((secret) =>
-          sharedSecrets.includes(secret._id.toString()) ||
-          sharedProjects.includes(projectId),
-        );
-      }
-    }
+  if (authorizedSecretIds) {
+    const authorizedIds = new Set(authorizedSecretIds);
+    secrets = secrets.filter((secret) => authorizedIds.has(secret._id.toString()));
   }
 
   return {
@@ -92,7 +78,6 @@ export const handleGetSecrets = async (
 
 export const handleGetSecretValue = async (
   secretId: string,
-  userId?: string,
 ): Promise<ResponseData> => {
   const secret = await SecretRepository.getSecretById(secretId);
 
@@ -104,24 +89,6 @@ export const handleGetSecretValue = async (
       statusCode: 404,
     };
   }
-  if (userId) {
-    const project = await ProjectRepository.getProjectById(secret.projectId.toString());
-    const isOwner = project?.ownerId.toString() === userId;
-    const environmentId = project?.environments
-      .find((environment) => environment.name === secret.environment)
-      ?._id?.toString();
-    const [secretGrant, environmentGrant, projectGrant] = await Promise.all([
-      hasActiveGrant(userId, "secret", secretId, ["secret:value:read"]),
-      environmentId
-        ? hasActiveGrant(userId, "environment", environmentId, ["secret:value:read"])
-        : Promise.resolve(false),
-      hasActiveGrant(userId, "project", secret.projectId.toString(), ["secret:value:read"]),
-    ]);
-    if (!isOwner && !secretGrant && !environmentGrant && !projectGrant) {
-      return { success: false, message: "You do not have permission to reveal this secret", data: null, statusCode: 403 };
-    }
-  }
-
   return {
     success: true,
     message: "Secret value fetched successfully",
@@ -132,8 +99,8 @@ export const handleGetSecretValue = async (
 
 export const handleUpdateSecret = async (
   secretId: string,
-  key: string,
-  value: string,
+  key: string | undefined,
+  value: string | undefined,
   userId: string,
 ): Promise<ResponseData> => {
   const secret = await SecretRepository.getSecretById(secretId);
@@ -147,26 +114,28 @@ export const handleUpdateSecret = async (
     };
   }
 
-  const existingSecret = await SecretRepository.findByKey(
-    secret.projectId.toString(),
-    key,
-    secret.environment,
-    secretId,
-  );
+  if (key !== undefined) {
+    const existingSecret = await SecretRepository.findByKey(
+      secret.projectId.toString(),
+      key,
+      secret.environment,
+      secretId,
+    );
 
-  if (existingSecret) {
-    return {
-      success: false,
-      message: "A secret with this key already exists in this environment",
-      data: null,
-      statusCode: 409,
-    };
+    if (existingSecret) {
+      return {
+        success: false,
+        message: "A secret with this key already exists in this environment",
+        data: null,
+        statusCode: 409,
+      };
+    }
   }
 
   const updatedSecret = await SecretRepository.updateSecret(
     secretId,
     key,
-    encryptSecret(value),
+    value === undefined ? undefined : encryptSecret(value),
     userId,
   );
 

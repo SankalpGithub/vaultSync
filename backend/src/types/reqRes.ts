@@ -10,4 +10,5 @@ export type ResponseData = {
 export interface AuthRequest extends Request {
   userId?: string;
   sessionId?: string;
+  authorizedSecretIds?: string[];
 }

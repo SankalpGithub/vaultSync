@@ -30,37 +30,35 @@ const deleteProject = async (projectId: string) => {
   return await Project.findByIdAndDelete(new Types.ObjectId(projectId));
 };
 
-const deleteProjectByOwner = async (projectId: string, ownerId: string) => {
+const softDeleteProject = async (projectId: string, actorId: string) => {
   return await Project.findOneAndUpdate(
     {
       _id: new Types.ObjectId(projectId),
-      ownerId: new Types.ObjectId(ownerId),
       isDeleted: false,
     },
     {
       isDeleted: true,
       deletedAt: new Date(),
-      lastModifiedBy: new Types.ObjectId(ownerId),
+      lastModifiedBy: new Types.ObjectId(actorId),
     },
     { new: true },
   );
 };
 
-const updateProjectByOwner = async (
+const updateProject = async (
   projectId: string,
-  ownerId: string,
+  actorId: string,
   updates: { name: string; description?: string; visibility: "private" | "internal" },
 ) => {
   return await Project.findOneAndUpdate(
     {
       _id: new Types.ObjectId(projectId),
-      ownerId: new Types.ObjectId(ownerId),
       isDeleted: false,
     },
     {
       $set: {
         ...updates,
-        lastModifiedBy: new Types.ObjectId(ownerId),
+        lastModifiedBy: new Types.ObjectId(actorId),
       },
     },
     { new: true, runValidators: true },
@@ -83,7 +81,7 @@ const getProjectsByOwner = async (ownerId: string) => {
 
 const createProjectEnvironment = async (
   projectId: string,
-  ownerId: string,
+  actorId: string,
   name: string,
 ) => {
   const normalizedName = name.trim().toLowerCase();
@@ -93,7 +91,6 @@ const createProjectEnvironment = async (
   );
   const projectFilter = {
     _id: new Types.ObjectId(projectId),
-    ownerId: new Types.ObjectId(ownerId),
     isDeleted: false,
   };
   const project = await Project.findOneAndUpdate(
@@ -107,7 +104,7 @@ const createProjectEnvironment = async (
     },
     {
       $push: { environments: { name: normalizedName, isDefault: false } },
-      $set: { lastModifiedBy: new Types.ObjectId(ownerId) },
+      $set: { lastModifiedBy: new Types.ObjectId(actorId) },
     },
     { new: true, runValidators: true },
   );
@@ -131,14 +128,13 @@ const createProjectEnvironment = async (
 
 const renameProjectEnvironment = async (
   projectId: string,
-  ownerId: string,
+  actorId: string,
   environmentId: string,
   name: string,
 ) => {
   const normalizedName = name.trim().toLowerCase();
   const projectFilter = {
     _id: new Types.ObjectId(projectId),
-    ownerId: new Types.ObjectId(ownerId),
     isDeleted: false,
   };
   const targetEnvironmentId = new Types.ObjectId(environmentId);
@@ -171,7 +167,7 @@ const renameProjectEnvironment = async (
     {
       $set: {
         "environments.$[environment].name": normalizedName,
-        lastModifiedBy: new Types.ObjectId(ownerId),
+        lastModifiedBy: new Types.ObjectId(actorId),
       },
     },
     {
@@ -212,12 +208,11 @@ const renameProjectEnvironment = async (
 
 const deleteProjectEnvironment = async (
   projectId: string,
-  ownerId: string,
+  actorId: string,
   environmentId: string,
 ) => {
   const projectFilter = {
     _id: new Types.ObjectId(projectId),
-    ownerId: new Types.ObjectId(ownerId),
     isDeleted: false,
   };
   const targetEnvironmentId = new Types.ObjectId(environmentId);
@@ -233,7 +228,7 @@ const deleteProjectEnvironment = async (
     },
     {
       $pull: { environments: { _id: targetEnvironmentId } },
-      $set: { lastModifiedBy: new Types.ObjectId(ownerId) },
+      $set: { lastModifiedBy: new Types.ObjectId(actorId) },
     },
     { new: true, runValidators: true },
   );
@@ -267,8 +262,8 @@ export const ProjectRepository = {
   createProject,
   getProjectById,
   deleteProject,
-  deleteProjectByOwner,
-  updateProjectByOwner,
+  softDeleteProject,
+  updateProject,
   getProjectsByOrg,
   getProjectsByOwner,
   createProjectEnvironment,

@@ -2,8 +2,10 @@ import { Types } from "mongoose";
 import type { ResponseData } from "../../types/reqRes.js";
 import { ProjectRepository } from "../../repository/project.repository.js";
 import type { ICreateProject } from "../../types/models/Iproject.js";
-import { getActiveResourceIds } from "../sharing/access.service.js";
+import { AccessGrant } from "../../models/accessGrant.model.js";
+import { activeGrantFilter } from "../sharing/access.service.js";
 import { Project } from "../../models/project.model.js";
+import { Secret } from "../../models/secret.model.js";
 
 export const handleCreateProject = async (
   name: string,
@@ -52,10 +54,62 @@ export const handleCreateProject = async (
 
 export const handleListProjects = async (ownerId: string) => {
   const owned = await ProjectRepository.getProjectsByOwner(ownerId);
-  const sharedIds = await getActiveResourceIds(ownerId, "project");
-  const shared = sharedIds.length
+  const [projectGrants, organizationGrants, secretGrants] = await Promise.all([
+    AccessGrant.find({
+      ...activeGrantFilter(ownerId),
+      resourceType: "project",
+      permissions: { $in: ["project:read", "secret:list"] },
+    }).select("resourceId"),
+    AccessGrant.find({
+      ...activeGrantFilter(ownerId),
+      resourceType: "organization",
+      permissions: {
+        $in: ["project:read", "organization:projects:list", "secret:list"],
+      },
+    }).select("resourceId"),
+    AccessGrant.find({
+      ...activeGrantFilter(ownerId),
+      resourceType: "secret",
+      permissions: "secret:list",
+    }).select("resourceId projectId"),
+  ]);
+  const sharedProjectIds = [
+    ...projectGrants.map((grant) => grant.resourceId),
+    ...secretGrants.flatMap((grant) =>
+      grant.projectId ? [grant.projectId] : [],
+    ),
+  ];
+  const sharedOrganizationIds = organizationGrants.map(
+    (grant) => grant.resourceId,
+  );
+  const secretGrantsWithoutProject = secretGrants.filter(
+    (grant) => !grant.projectId,
+  );
+  const grantedSecrets = secretGrantsWithoutProject.length
+    ? await Secret.find({
+        _id: { $in: secretGrantsWithoutProject.map((grant) => grant.resourceId) },
+        isDeleted: false,
+      }).select("projectId")
+    : [];
+  sharedProjectIds.push(...grantedSecrets.map((secret) => secret.projectId));
+  const uniqueSharedProjectIds = [
+    ...new Map(sharedProjectIds.map((id) => [id.toString(), id])).values(),
+  ];
+  const uniqueSharedOrganizationIds = [
+    ...new Map(
+      sharedOrganizationIds.map((id) => [id.toString(), id]),
+    ).values(),
+  ];
+  const shared = uniqueSharedProjectIds.length || uniqueSharedOrganizationIds.length
     ? await Project.find({
-        _id: { $in: sharedIds.map((id) => new Types.ObjectId(id)) },
+        $or: [
+          ...(uniqueSharedProjectIds.length
+            ? [{ _id: { $in: uniqueSharedProjectIds } }]
+            : []),
+          ...(uniqueSharedOrganizationIds.length
+            ? [{ orgId: { $in: uniqueSharedOrganizationIds } }]
+            : []),
+        ],
         isDeleted: false,
       }).sort({ createdAt: -1 })
     : [];
@@ -75,11 +129,11 @@ export const handleListProjects = async (ownerId: string) => {
   return res;
 };
 
-export const handleDeleteProjectByOwner = async (
+export const handleSoftDeleteProject = async (
   projectId: string,
   ownerId: string,
 ) => {
-  const project = await ProjectRepository.deleteProjectByOwner(
+  const project = await ProjectRepository.softDeleteProject(
     projectId,
     ownerId,
   );
@@ -100,7 +154,7 @@ export const handleDeleteProjectByOwner = async (
   return res;
 };
 
-export const handleUpdateProjectByOwner = async (
+export const handleUpdateProject = async (
   projectId: string,
   ownerId: string,
   updates: {
@@ -110,7 +164,7 @@ export const handleUpdateProjectByOwner = async (
   },
 ) => {
   const project = await ProjectRepository.getProjectById(projectId);
-  if (!project || project.ownerId.toString() !== ownerId || project.isDeleted) {
+  if (!project || project.isDeleted) {
     return {
       success: false,
       message: "Project not found",
@@ -134,7 +188,7 @@ export const handleUpdateProjectByOwner = async (
     } satisfies ResponseData;
   }
 
-  const updatedProject = await ProjectRepository.updateProjectByOwner(
+  const updatedProject = await ProjectRepository.updateProject(
     projectId,
     ownerId,
     updates,

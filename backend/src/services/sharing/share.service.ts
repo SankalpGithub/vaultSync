@@ -14,7 +14,10 @@ import { randomBytes, createHash } from "node:crypto";
 import {
   getBuiltInRolePermissions,
   isBuiltInRbacRole,
+  isRbacPermission,
+  RBAC_PERMISSION_SCOPES,
 } from "../../authz/rbac.js";
+import type { RbacPermission } from "../../authz/rbac.js";
 
 export interface ISendShareInvitationRequest {
   sharerId: string;
@@ -109,6 +112,20 @@ export const handleShareInvitation = async (
   );
 
   const permissions = getBuiltInRolePermissions(body.role);
+  if (
+    !permissions.some((permission) =>
+      RBAC_PERMISSION_SCOPES[permission].some(
+        (scope) =>
+          scope === "organization" ||
+          scope === "project" ||
+          scope === "environment",
+      ),
+    )
+  ) {
+    throw new AppError("The selected role cannot be shared", 400);
+  }
+  const hasSpecificResources =
+    selectedProjectIds.length > 0 || secretIds.length > 0;
   const projectNames = allProjectIds
     .map((id) => projectsById.get(id.toString())?.name)
     .filter((name): name is string => name !== undefined);
@@ -132,13 +149,25 @@ export const handleShareInvitation = async (
         recipientEmail: recipient.email,
         tokenHash: createHash("sha256").update(token).digest("hex"),
         orgId,
-        orgPermissions: permissions.filter((permission) =>
-          permission.startsWith("organization:"),
-        ),
+        orgPermissions: permissions.filter((permission) => {
+          const scopes = RBAC_PERMISSION_SCOPES[permission];
+          return (
+            !hasSpecificResources &&
+            scopes.some(
+              (scope) =>
+                scope === "organization" ||
+                scope === "project" ||
+                scope === "environment",
+            )
+          );
+        }),
+        projectPermissions: permissions.filter((permission) => {
+          const scopes = RBAC_PERMISSION_SCOPES[permission];
+          return scopes.some(
+            (scope) => scope === "project" || scope === "environment",
+          );
+        }),
         projectId: selectedProjectIds,
-        projectPermissions: permissions.filter((permission) =>
-          permission.startsWith("project:"),
-        ),
         environment: [],
         secretId: secretIds,
         secretPermission: permissions.filter((permission) =>
@@ -271,6 +300,18 @@ export const acceptShareInvitation = async (
         isDeleted: false,
       })
     : null;
+  const sharedSecrets = invitation.secretId.length
+    ? await Secret.find({
+        _id: { $in: invitation.secretId },
+        isDeleted: false,
+      }).select("_id projectId")
+    : [];
+  if (sharedSecrets.length !== invitation.secretId.length) {
+    throw new AppError("One or more shared secrets were not found", 404);
+  }
+  const sharedSecretsById = new Map(
+    sharedSecrets.map((secret) => [secret._id.toString(), secret]),
+  );
   const targets: Array<{
     resourceType: "organization" | "project" | "environment" | "secret";
     resourceId: Types.ObjectId;
@@ -293,11 +334,16 @@ export const acceptShareInvitation = async (
       ...(project ? { projectId: project._id } : {}),
       permissions: item.permissions,
     })),
-    ...invitation.secretId.map((id) => ({
-      resourceType: "secret" as const,
-      resourceId: id,
-      permissions: invitation.secretPermission,
-    })),
+    ...invitation.secretId.map((id) => {
+      const secret = sharedSecretsById.get(id.toString());
+      if (!secret) throw new AppError("Shared secret not found", 404);
+      return {
+        resourceType: "secret" as const,
+        resourceId: id,
+        projectId: secret.projectId,
+        permissions: invitation.secretPermission,
+      };
+    }),
   ];
   await shareInvitations.updateOne(
     { _id: invitation._id, status: "pending" },
@@ -314,10 +360,25 @@ export const acceptShareInvitation = async (
     })),
     { ordered: false },
   );
+  const projectIds = [
+    ...new Set([
+      ...invitation.projectId.map((id) => id.toString()),
+      ...sharedSecrets.map((secret) => secret.projectId.toString()),
+    ]),
+  ];
+  const secretProjectIds = invitation.secretPermission.includes("secret:list")
+    ? sharedSecrets.map((secret) => secret.projectId.toString())
+    : invitation.projectPermissions.includes("secret:list")
+      ? invitation.projectId.map((id) => id.toString())
+      : [];
   return {
     success: true,
     message: "Invitation accepted",
-    data: { invitationId: invitation._id.toString() },
+    data: {
+      invitationId: invitation._id.toString(),
+      projectIds,
+      secretProjectIds: [...new Set(secretProjectIds)],
+    },
     statusCode: 200,
   };
 };
@@ -394,6 +455,91 @@ export const updateShareGrant = async (
   userId: string,
   body: { role?: string; permissions?: string[]; expiresAt?: string | null },
 ): Promise<ResponseData> => {
+  if (!Types.ObjectId.isValid(grantId)) {
+    throw new AppError("Valid grant ID is required", 400);
+  }
+  if (body.role !== undefined && typeof body.role !== "string") {
+    throw new AppError("Invalid sharing role", 400);
+  }
+  if (
+    body.permissions !== undefined &&
+    (!Array.isArray(body.permissions) ||
+      body.permissions.some((permission) => typeof permission !== "string"))
+  ) {
+    throw new AppError("Grant permissions must be an array of strings", 400);
+  }
+  if (
+    body.expiresAt !== undefined &&
+    body.expiresAt !== null &&
+    (typeof body.expiresAt !== "string" ||
+      !Number.isFinite(new Date(body.expiresAt).getTime()))
+  ) {
+    throw new AppError("Grant expiration must be a valid date or null", 400);
+  }
+
+  const existingGrant = await AccessGrant.findOne({
+    _id: new Types.ObjectId(grantId),
+    grantedBy: new Types.ObjectId(userId),
+    status: "active",
+  });
+  if (!existingGrant)
+    throw new AppError("Grant not found or you cannot manage it", 404);
+
+  const role = body.role ?? existingGrant.role;
+  if (!isBuiltInRbacRole(role)) {
+    throw new AppError("Invalid sharing role", 400);
+  }
+
+  const rolePermissions = getBuiltInRolePermissions(role);
+  const permissionsForResource: Record<
+    typeof existingGrant.resourceType,
+    (permission: RbacPermission) => boolean
+  > = {
+    organization: (permission) =>
+      RBAC_PERMISSION_SCOPES[permission].some(
+        (scope) => scope === "organization",
+      ),
+    project: (permission) =>
+      RBAC_PERMISSION_SCOPES[permission].some(
+        (scope) => scope === "project" || scope === "environment",
+      ),
+    environment: (permission) =>
+      RBAC_PERMISSION_SCOPES[permission].some(
+        (scope) => scope === "environment",
+      ),
+    secret: (permission) => permission.startsWith("secret:"),
+  };
+  const rolePermissionsForResource = rolePermissions.filter(
+    (permission) => permissionsForResource[existingGrant.resourceType](permission),
+  );
+  if (!rolePermissionsForResource.length) {
+    throw new AppError("The selected role cannot be assigned to this resource", 400);
+  }
+  const allowedPermissions = new Set<string>(rolePermissionsForResource);
+  const existingPermissions = new Set(existingGrant.permissions);
+  const permissions =
+    body.permissions ??
+    (body.role
+      ? rolePermissionsForResource.filter((permission) =>
+          existingPermissions.has(permission),
+        )
+      : existingGrant.permissions.filter((permission) =>
+          allowedPermissions.has(permission),
+        ));
+  if (
+    permissions.some(
+      (permission) =>
+        !isRbacPermission(permission) ||
+        !allowedPermissions.has(permission) ||
+        !existingPermissions.has(permission),
+    )
+  ) {
+    throw new AppError(
+      "Grant updates cannot add permissions; create a new invitation to grant additional access",
+      400,
+    );
+  }
+
   const grant = await AccessGrant.findOneAndUpdate(
     {
       _id: new Types.ObjectId(grantId),
@@ -402,8 +548,8 @@ export const updateShareGrant = async (
     },
     {
       $set: {
-        ...(body.role && { role: body.role }),
-        ...(body.permissions && { permissions: body.permissions }),
+        role,
+        permissions,
         ...(body.expiresAt !== undefined && {
           expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
         }),

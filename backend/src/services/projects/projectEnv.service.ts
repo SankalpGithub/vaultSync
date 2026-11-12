@@ -5,12 +5,12 @@ import { AppError } from "../../utils/appError.js";
 
 export const handleCreateEnvironment = async (
   projectId: string,
-  ownerId: string,
+  actorId: string,
   name: string,
 ) => {
   const result = await ProjectRepository.createProjectEnvironment(
     projectId,
-    ownerId,
+    actorId,
     name,
   );
 
@@ -53,7 +53,7 @@ export const handleCreateEnvironment = async (
 
 export const handleRenameEnvironment = async (
   projectId: string,
-  ownerId: string,
+  actorId: string,
   environmentId: string,
   name: string,
 ) => {
@@ -63,7 +63,7 @@ export const handleRenameEnvironment = async (
   )?.name;
   const result = await ProjectRepository.renameProjectEnvironment(
     projectId,
-    ownerId,
+    actorId,
     environmentId,
     name,
   );
@@ -133,12 +133,12 @@ export const handleRenameEnvironment = async (
 
 export const handleDeleteEnvironment = async (
   projectId: string,
-  ownerId: string,
+  actorId: string,
   environmentId: string,
 ) => {
   const result = await ProjectRepository.deleteProjectEnvironment(
     projectId,
-    ownerId,
+    actorId,
     environmentId,
   );
 

@@ -21,6 +21,7 @@ export const RBAC_PERMISSIONS = [
   "platform:audit:read",
   "platform:settings:manage",
   "organization:create",
+  "organization:list",
   "organization:read",
   "organization:update",
   "organization:delete",
@@ -95,6 +96,11 @@ export const RBAC_PERMISSIONS = [
   "policy:update",
   "billing:read",
   "billing:update",
+  "share:invitation:list",
+  "share:invitation:respond",
+  "share:invitation:manage",
+  "share:grant:list",
+  "share:grant:manage",
 ] as const;
 
 export type RbacPermission = (typeof RBAC_PERMISSIONS)[number];
@@ -107,6 +113,7 @@ export const RBAC_PERMISSION_SCOPES = {
   "platform:audit:read": ["global"],
   "platform:settings:manage": ["global"],
   "organization:create": ["user"],
+  "organization:list": ["user"],
   "organization:read": ["organization"],
   "organization:update": ["organization"],
   "organization:delete": ["organization"],
@@ -127,7 +134,7 @@ export const RBAC_PERMISSION_SCOPES = {
   "organization:roles:delete": ["organization"],
   "organization:audit:read": ["organization"],
   "project:create": ["organization"],
-  "project:list": ["organization"],
+  "project:list": ["user"],
   "project:list_all": ["organization"],
   "project:read": ["project"],
   "project:update": ["project"],
@@ -181,9 +188,28 @@ export const RBAC_PERMISSION_SCOPES = {
   "policy:update": ["organization"],
   "billing:read": ["organization"],
   "billing:update": ["organization"],
+  "share:invitation:list": ["user"],
+  "share:invitation:respond": ["user"],
+  "share:invitation:manage": ["user"],
+  "share:grant:list": ["user"],
+  "share:grant:manage": ["user"],
 } as const satisfies Record<RbacPermission, readonly RbacScopeType[]>;
 
 export const RBAC_ROLES = {
+  accountUser: {
+    name: "Account User",
+    description: "Can create organizations and view resources shared with the account.",
+    permissions: [
+      "organization:create",
+      "organization:list",
+      "project:list",
+      "share:invitation:list",
+      "share:invitation:respond",
+      "share:invitation:manage",
+      "share:grant:list",
+      "share:grant:manage",
+    ],
+  },
   owner: {
     name: "Owner",
     description: "Full customer-level access within the assigned organization.",

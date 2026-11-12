@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -9,8 +10,13 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, loading, logout } = useAuth();
 
-  if (!loading && !isAuthenticated) {
-    router.replace("/auth/login");
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.replace("/auth/login");
+    }
+  }, [isAuthenticated, loading, router]);
+
+  if (loading || !isAuthenticated) {
     return null;
   }
 
@@ -37,9 +43,9 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           </span>
           <button
             className="sidebar-logout"
-            onClick={() => {
-              void logout();
-              router.push("/auth/login");
+            onClick={async () => {
+              await logout();
+              router.replace("/auth/login");
             }}
             type="button"
           >

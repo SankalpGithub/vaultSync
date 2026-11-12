@@ -24,8 +24,33 @@ The frontend currently uses `http://localhost:5000/api/v1/auth`.
 
 The service `statusCode` controls the HTTP status and is not included in the JSON response by `sendResponse`.
 
-Project routes require a valid access token. Creating a project environment is
-restricted to the project owner.
+Organization, project, secret, and sharing routes require a valid access token.
+Actions are additionally gated by the RBAC permissions described below.
+
+## Role-based access control
+
+Authenticated organization, project, environment, secret, and sharing routes
+declare their required permission in route middleware. The middleware resolves
+the requested resource from the database, loads the user's ownership and active
+share-grant assignments, resolves each built-in role's permission set, and
+checks the permission at the resource's scope. Organization and project
+assignments inherit only the permissions included in that assignment; expired
+or revoked grants are ignored.
+
+The built-in roles are defined in `src/authz/rbac.ts`. Organization and project
+owners receive the corresponding owner role implicitly. Other role assignments
+come from accepted share grants. Invitations cannot assign permissions the
+inviter does not have; grant updates can narrow an existing grant but cannot
+expand it. Secret listing through a secret-only grant returns only the secrets
+authorized by that grant. Shared organizations and projects are included in
+workspace listings when an active grant permits the recipient to read a
+project or its secrets, including grants created before secret grants stored
+their owning project ID.
+
+Production secret-value reads require both `secret:value:read` and
+`secret:value:read:production`. A denied action returns HTTP `403` with the
+missing permission in the message. Invalid or missing resources return HTTP
+`400` or `404` respectively.
 
 ## Validation rules
 

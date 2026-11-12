@@ -15,6 +15,7 @@ export default function AcceptSharedInvitationPage() {
   const [status, setStatus] = useState("Checking invitation...");
   const [error, setError] = useState("");
   const [accepted, setAccepted] = useState(false);
+  const [sharedSecretsProjectId, setSharedSecretsProjectId] = useState("");
 
   useEffect(() => {
     if (loading) return;
@@ -34,6 +35,9 @@ export default function AcceptSharedInvitationPage() {
       if (!active) return;
       if (result.success) {
         setAccepted(true);
+        setSharedSecretsProjectId(
+          result.data?.secretProjectIds?.[0] ?? "",
+        );
         setStatus("Invitation accepted. Your shared resources are now available.");
       } else {
         setError(result.message);
@@ -54,7 +58,18 @@ export default function AcceptSharedInvitationPage() {
         {status ? <p className="workspace-success">{status}</p> : null}
         {error ? <p className="workspace-error">{error}</p> : null}
         <div className="workspace-actions">
-          {accepted ? <Link className="button button-accent" href="/secrets">View shared secrets</Link> : null}
+          {accepted ? (
+            <Link
+              className="button button-accent"
+              href={
+                sharedSecretsProjectId
+                  ? `/secrets?projectId=${encodeURIComponent(sharedSecretsProjectId)}`
+                  : "/dashboard"
+              }
+            >
+              View shared resources
+            </Link>
+          ) : null}
           <Link className="button" href="/share">Manage sharing</Link>
         </div>
       </section>

@@ -1,8 +1,8 @@
 import {
   handleCreateProject,
-  handleDeleteProjectByOwner,
+  handleSoftDeleteProject,
   handleListProjects,
-  handleUpdateProjectByOwner,
+  handleUpdateProject,
 } from "../services/projects/createProject.service.js";
 import type { ResponseData, AuthRequest } from "../types/reqRes.js";
 import type { Response } from "express";
@@ -65,7 +65,7 @@ export const deleteProject = async (req: AuthRequest, res: Response) => {
     throw new AppError("Valid Project ID is required", 400);
   }
 
-  const result: ResponseData = await handleDeleteProjectByOwner(
+  const result: ResponseData = await handleSoftDeleteProject(
     projectId,
     userId,
   );
@@ -83,7 +83,7 @@ export const updateProject = async (req: AuthRequest, res: Response) => {
   }
 
   const { name, description, visibility } = req.body;
-  const result: ResponseData = await handleUpdateProjectByOwner(
+  const result: ResponseData = await handleUpdateProject(
     projectId,
     userId,
     { name, description, visibility },
@@ -94,7 +94,7 @@ export const updateProject = async (req: AuthRequest, res: Response) => {
 /**
  * @route   POST /project/:projectId/environments
  * @desc    Add an environment to a project
- * @access  secure (project owner)
+ * @access  secure (requires project:delete permission)
  */
 export const createProjectEnvironment = async (
   req: AuthRequest,
@@ -119,7 +119,7 @@ export const createProjectEnvironment = async (
 /**
  * @route   PATCH /project/:projectId/environments/:environmentId
  * @desc    Rename a non-default project environment
- * @access  secure (project owner)
+ * @access  secure (requires project:update permission)
  */
 export const renameProjectEnvironment = async (
   req: AuthRequest,
@@ -146,7 +146,7 @@ export const renameProjectEnvironment = async (
 /**
  * @route   DELETE /project/:projectId/environments/:environmentId
  * @desc    Delete a non-default project environment
- * @access  secure (project owner)
+ * @access  secure (requires environment:create permission)
  */
 export const deleteProjectEnvironment = async (
   req: AuthRequest,
